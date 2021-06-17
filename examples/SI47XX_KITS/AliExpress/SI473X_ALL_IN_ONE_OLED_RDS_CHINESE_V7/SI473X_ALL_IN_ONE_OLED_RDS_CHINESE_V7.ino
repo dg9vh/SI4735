@@ -104,7 +104,7 @@ const uint16_t cmd_0x15_size = sizeof cmd_0x15;         // Array of lines where 
 #define MODE_SWITCH 4      // Switch MODE (Am/LSB/USB)
 #define BANDWIDTH_BUTTON 5 // Used to select the banddwith.
 #define VOLUME_BUTTON 6    // Volume Up
-#define FREE_BUTTON1 7     // **** Use thi button to implement a new function
+#define MUTE_BUTTON 7     // **** Use thi button to implement a new function
 #define BAND_BUTTON 8      // Next band
 #define SOFTMUTE_BUTTON 9     // **** Use thi button to implement a new function
 #define AGC_BUTTON 11      // Switch AGC ON/OF
@@ -145,6 +145,8 @@ bool cmdStep = false;     // if true, the encoder will control the step frequenc
 bool cmdBw = false;       // if true, the encoder will control the bandwidth
 bool cmdBand = false;     // if true, the encoder will control the band
 bool cmdSoftMute = false; // if true, the encoder will control the Soft Mute attenuation
+
+bool audioMuted = false;
 
 long countRSSI = 0;
 
@@ -217,6 +219,35 @@ const int lastStep = (sizeof tabStep / sizeof(int)) - 1;
 int idxStep = 3;
 
 /*
+ * S-Meter data structure
+ */
+
+typedef struct {
+  uint8_t minimumdBuV;
+  uint8_t maximumdBuV;
+  String sWert;
+} SValue;
+
+SValue svalue[] = {
+  {127, 121, "S0"},
+  {121, 115, "S1"},
+  {115, 109, "S2"},
+  {109, 103, "S3"},
+  {103, 97, "S4"},
+  {97, 91, "S5"},
+  {91, 85, "S6"},
+  {85, 79, "S7"},
+  {79, 73, "S8"},
+  {73, 63, "S9"},
+  {63, 53, "S9+10"},
+  {53, 43, "S9+20"},
+  {43, 33, "S9+30"},
+  {33, 23, "S9+40"},
+  {23, 13, "S9+50"},
+  {13, 0, "S9+60"},
+};
+
+/*
    Band data structure
 */
 typedef struct
@@ -286,7 +317,7 @@ void setup()
   pinMode(BAND_BUTTON, INPUT_PULLUP);
   pinMode(SOFTMUTE_BUTTON, INPUT_PULLUP);
   pinMode(VOLUME_BUTTON, INPUT_PULLUP);
-  pinMode(FREE_BUTTON1, INPUT_PULLUP);
+  pinMode(MUTE_BUTTON, INPUT_PULLUP);
   pinMode(ENCODER_BUTTON, INPUT_PULLUP);
   pinMode(AGC_BUTTON, INPUT_PULLUP);
   pinMode(STEP_BUTTON, INPUT_PULLUP);
@@ -485,6 +516,11 @@ void convertToChar(uint16_t value, char *strValue, uint8_t len, uint8_t dot, uin
   }
 }
 
+void muteAudio() {
+  audioMuted = !audioMuted;
+  si4735.setAudioMute(audioMuted);
+}
+
 /**
   Show current frequency
 */
@@ -577,7 +613,29 @@ void showBandDesc()
 */
 void showRSSI()
 {
-  int bars = (rssi / 20.0) + 1;
+  // code by DG9VH begin
+  int bars = 0;
+  if (currentMode == FM)
+    bars = (rssi / 20.0) + 1;
+  else
+    bars = (rssi / 80.0) + 1;
+  
+  if (currentMode == AM) {
+    oled.setCursor(0, 2);
+    oled.print("RSSI: -");
+    int newrssi = 127 - rssi;
+    oled.print(newrssi);
+    oled.print(" dBuV    ");
+    for (int i = 0; i < 16; ++i) {
+      if (svalue[i].minimumdBuV >= newrssi && svalue[i].maximumdBuV < newrssi) {
+        oled.setCursor(92, 2);
+        oled.print("     ");
+        oled.setCursor(92, 2);
+        oled.print(svalue[i].sWert);
+      }
+    }
+  }
+  // code by DG9VH end
   oled.setCursor(90, 3);
   oled.print("      ");
   oled.setCursor(90, 3);
@@ -1121,10 +1179,11 @@ void loop()
       disableCommand(&cmdVolume, cmdVolume, showVolume);
       delay(MIN_ELAPSED_TIME); // waits a little more for releasing the button.
     }
-    else if (digitalRead(FREE_BUTTON1) == LOW)
+else if (digitalRead(MUTE_BUTTON) == LOW)
     {
       // available to add other function
-      showStatus();
+      muteAudio();
+      //showStatus();
     }
     else if (digitalRead(ENCODER_BUTTON) == LOW)
     {
