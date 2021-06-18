@@ -1244,17 +1244,31 @@ else if (digitalRead(MUTE_BUTTON) == LOW)
         {
           // If you were in AM mode, it is necessary to load SSB patch (avery time)
           loadSSB();
-          currentMode = LSB;
+          if (currentFrequency > 10000) {
+            currentMode = USB;
+          } else {
+            currentMode = LSB;
+          }
         }
         else if (currentMode == LSB)
         {
-          currentMode = USB;
+          if (currentFrequency <= 10000) {
+            currentMode = USB;
+          } else {
+            currentMode = AM;
+            ssbLoaded = false;
+            bfoOn = false;
+          }
         }
         else if (currentMode == USB)
         {
-          currentMode = AM;
-          ssbLoaded = false;
-          bfoOn = false;
+          if (currentFrequency > 10000) {
+            currentMode = LSB;
+          } else {
+            currentMode = AM;
+            ssbLoaded = false;
+            bfoOn = false;
+          }
         }
         // Nothing to do if you are in FM mode
         band[bandIdx].currentFreq = currentFrequency;
