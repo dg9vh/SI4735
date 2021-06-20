@@ -113,6 +113,7 @@ const uint16_t cmd_0x15_size = sizeof cmd_0x15;         // Array of lines where 
 
 #define MIN_ELAPSED_TIME 100
 #define MIN_ELAPSED_RSSI_TIME 150
+#define MIN_LIGHT_TIME 120000 // used to switch off display after 2 minutes idle
 
 #define DEFAULT_VOLUME 45 // change it for your favorite sound volume
 
@@ -154,6 +155,8 @@ int currentBFO = 0;
 
 long elapsedRSSI = millis();
 long elapsedButton = millis();
+
+long lightTimer = millis();
 
 // Encoder control variables
 volatile int encoderCount = 0;
@@ -1102,9 +1105,15 @@ void disableCommand(bool *b, bool value, void (*showFunction)())
 
 void loop()
 {
+  // Check, if we can switch off display
+  if ((millis() - lightTimer)> MIN_LIGHT_TIME ) {
+    oled.off();
+  }
   // Check if the encoder has moved.
   if (encoderCount != 0)
   {
+    oled.on();
+    lightTimer = millis();
     if (cmdVolume)
       doVolume(encoderCount);
     else if (cmdAgcAtt || cmdSoftMute)
@@ -1155,18 +1164,24 @@ void loop()
     // check if some button is pressed
     if (digitalRead(BANDWIDTH_BUTTON) == LOW)
     {
+      oled.on();
+      lightTimer = millis();
       cmdBw = !cmdBw;
       disableCommand(&cmdBw, cmdBw, showBandwidth);
       delay(MIN_ELAPSED_TIME); // waits a little more for releasing the button.
     }
     else if (digitalRead(BAND_BUTTON) == LOW)
     {
+      oled.on();
+      lightTimer = millis();
       cmdBand = !cmdBand;
       disableCommand(&cmdBand, cmdBand, showBandDesc);
       delay(MIN_ELAPSED_TIME); // waits a little more for releasing the button.
     }
     else if (digitalRead(SOFTMUTE_BUTTON) == LOW)
     {
+      oled.on();
+      lightTimer = millis();
       if (currentMode != FM) {
         cmdSoftMute = !cmdSoftMute;
         disableCommand(&cmdSoftMute, cmdSoftMute, showAttenuation);
@@ -1175,18 +1190,25 @@ void loop()
     }
     else if (digitalRead(VOLUME_BUTTON) == LOW)
     {
+      oled.on();
+      lightTimer = millis();
       cmdVolume = !cmdVolume;
       disableCommand(&cmdVolume, cmdVolume, showVolume);
       delay(MIN_ELAPSED_TIME); // waits a little more for releasing the button.
     }
-else if (digitalRead(MUTE_BUTTON) == LOW)
+   else if (digitalRead(MUTE_BUTTON) == LOW)
     {
+      
+      oled.on();
+      lightTimer = millis();
       // available to add other function
       muteAudio();
       //showStatus();
     }
     else if (digitalRead(ENCODER_BUTTON) == LOW)
     {
+      oled.on();
+      lightTimer = millis();
       if (currentMode == LSB || currentMode == USB)
       {
         bfoOn = !bfoOn;
@@ -1221,6 +1243,8 @@ else if (digitalRead(MUTE_BUTTON) == LOW)
     }
     else if (digitalRead(AGC_BUTTON) == LOW)
     {
+      oled.on();
+      lightTimer = millis();
       if ( currentMode != FM) {
         cmdAgcAtt = !cmdAgcAtt;
         disableCommand(&cmdAgcAtt, cmdAgcAtt, showAttenuation);
@@ -1229,6 +1253,8 @@ else if (digitalRead(MUTE_BUTTON) == LOW)
     }
     else if (digitalRead(STEP_BUTTON) == LOW)
     {
+      oled.on();
+      lightTimer = millis();
       if (currentMode != FM)
       {
         cmdStep = !cmdStep;
@@ -1238,6 +1264,8 @@ else if (digitalRead(MUTE_BUTTON) == LOW)
     }
     else if (digitalRead(MODE_SWITCH) == LOW)
     {
+      oled.on();
+      lightTimer = millis();
       if (currentMode != FM)
       {
         if (currentMode == AM)
