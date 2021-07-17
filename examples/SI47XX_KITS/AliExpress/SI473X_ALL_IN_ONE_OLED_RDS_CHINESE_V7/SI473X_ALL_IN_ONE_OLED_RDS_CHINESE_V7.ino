@@ -156,7 +156,7 @@ int currentBFO = 0;
 long elapsedRSSI = millis();
 long elapsedButton = millis();
 
-long lightTimer = millis();
+//long lightTimer = millis();
 
 // Encoder control variables
 volatile int encoderCount = 0;
@@ -185,15 +185,15 @@ Bandwidth bandwidthSSB[] = {
     {3, "4.0"}  // 5
 };              // 3 = 4kHz
 
-int8_t bwIdxAM = 4;
+int8_t bwIdxAM = 5;
 const int maxFilterAM = 6;
 Bandwidth bandwidthAM[] = {
     {4, "1.0"}, // 0
     {5, "1.8"}, // 1
     {3, "2.0"}, // 2
     {6, "2.5"}, // 3
-    {2, "3.0"}, // 4 - default
-    {1, "4.0"}, // 5
+    {2, "3.0"}, // 4
+    {1, "4.0"}, // 5 - default
     {0, "6.0"}  // 6
 };
 
@@ -232,22 +232,22 @@ typedef struct {
 } SValue;
 
 SValue svalue[] = {
-  {127, 121, "S0"},
-  {121, 115, "S1"},
-  {115, 109, "S2"},
-  {109, 103, "S3"},
-  {103, 97, "S4"},
-  {97, 91, "S5"},
-  {91, 85, "S6"},
-  {85, 79, "S7"},
-  {79, 73, "S8"},
-  {73, 63, "S9"},
-  {63, 53, "S9+10"},
-  {53, 43, "S9+20"},
-  {43, 33, "S9+30"},
-  {33, 23, "S9+40"},
-  {23, 13, "S9+50"},
   {13, 0, "S9+60"},
+  {23, 12, "S9+50"},
+  {33, 22, "S9+40"},
+  {43, 32, "S9+30"},
+  {53, 42, "S9+20"},
+  {63, 52, "S9+10"},
+  {73, 62, "S9"},
+  {79, 72, "S8"},
+  {85, 78, "S7"},
+  {91, 84, "S6"},
+  {97, 90, "S5"},
+  {103, 96, "S4"},
+  {109, 102, "S3"},
+  {115, 108, "S2"},
+  {121, 114, "S1"},
+  {128, 120, "S0"}
 };
 
 /*
@@ -274,29 +274,29 @@ typedef struct
 */
 Band band[] = {
     {FM_BAND_TYPE, 6400, 8400, 7000, 3, 0},     // FM from 64 to 84MHz; default 70MHz; default step frequency index is 3; default bandwidth index AUTO  
-    {FM_BAND_TYPE, 8400, 10800, 10570, 3, 0},
-    {LW_BAND_TYPE, 100, 510, 300, 0, 4},
-    {MW_BAND_TYPE, 520, 1720, 810, 3, 4},       // AM/MW from 520 to 1720kHz; default 810kHz; default step frequency index is 3 (10kHz); default bandwidth index is 4 (3kHz)
-    {MW_BAND_TYPE, 531, 1701, 783, 2, 4},       // MW for Europe, Africa and Asia
-    {SW_BAND_TYPE, 1700, 3500, 1900, 0, 4},     // 160 meters
+    {FM_BAND_TYPE, 8400, 10800, 10370, 3, 0},
+    {LW_BAND_TYPE, 100, 510, 234, 0, 5},
+    {MW_BAND_TYPE, 520, 1720, 810, 3, 5},       // AM/MW from 520 to 1720kHz; default 810kHz; default step frequency index is 3 (10kHz); default bandwidth index is 4 (3kHz)
+    {MW_BAND_TYPE, 531, 1701, 783, 2, 5},       // MW for Europe, Africa and Asia
+    {SW_BAND_TYPE, 1700, 3500, 1900, 0, 5},     // 160 meters
     {SW_BAND_TYPE, 3500, 4500, 3700, 0, 5},     // 80 meters
-    {SW_BAND_TYPE, 4500, 5600, 4850, 1, 4},
-    {SW_BAND_TYPE, 5600, 6800, 6000, 1, 4},
-    {SW_BAND_TYPE, 6800, 7300, 7100, 0, 4},     // 40 meters
-    {SW_BAND_TYPE, 7200, 8500, 7200, 1, 4},     // 41 meters    
-    {SW_BAND_TYPE, 8500, 10000, 9600, 1, 4},
-    {SW_BAND_TYPE, 10000, 11200, 10100, 0, 4},  // 30 meters
-    {SW_BAND_TYPE, 11200, 12500, 11940, 1, 4},
-    {SW_BAND_TYPE, 13400, 13900, 13600, 1, 4},
-    {SW_BAND_TYPE, 14000, 14500, 14200, 0, 4},  // 20 meters
-    {SW_BAND_TYPE, 15000, 15900, 15300, 1, 4},
-    {SW_BAND_TYPE, 17200, 17900, 17600, 1, 4},
-    {SW_BAND_TYPE, 18000, 18300, 18100, 0, 4},  // 17 meters
-    {SW_BAND_TYPE, 21000, 21400, 21200, 0, 4},  // 15 mters
-    {SW_BAND_TYPE, 21400, 21900, 21500, 1, 4},  // 13 mters
-    {SW_BAND_TYPE, 24890, 26200, 24940, 0, 4},  // 12 meters
-    {SW_BAND_TYPE, 26200, 28000, 27500, 0, 4},  // CB band (11 meters) 
-    {SW_BAND_TYPE, 28000, 30000, 28400, 0, 4}   // 10 meters
+    {SW_BAND_TYPE, 4500, 5600, 4850, 1, 5},
+    {SW_BAND_TYPE, 5600, 6800, 6070, 1, 5},
+    {SW_BAND_TYPE, 6800, 7300, 7100, 0, 5},     // 40 meters
+    {SW_BAND_TYPE, 7200, 8500, 7200, 1, 5},     // 41 meters    
+    {SW_BAND_TYPE, 8500, 10000, 9600, 1, 5},
+    {SW_BAND_TYPE, 10000, 11200, 10100, 0, 5},  // 30 meters
+    {SW_BAND_TYPE, 11200, 12500, 11940, 1, 5},
+    {SW_BAND_TYPE, 13400, 13900, 13600, 1, 5},
+    {SW_BAND_TYPE, 14000, 14500, 14200, 0, 5},  // 20 meters
+    {SW_BAND_TYPE, 15000, 15900, 15300, 1, 5},
+    {SW_BAND_TYPE, 17200, 17900, 17600, 1, 5},
+    {SW_BAND_TYPE, 18000, 18300, 18100, 0, 5},  // 17 meters
+    {SW_BAND_TYPE, 21000, 21400, 21200, 0, 5},  // 15 mters
+    {SW_BAND_TYPE, 21400, 21900, 21500, 1, 5},  // 13 mters
+    {SW_BAND_TYPE, 24890, 26200, 24940, 0, 5},  // 12 meters
+    {SW_BAND_TYPE, 26200, 28000, 27500, 0, 5},  // CB band (11 meters) 
+    {SW_BAND_TYPE, 28000, 30000, 28400, 0, 5}   // 10 meters
 };
 
 const int lastBand = (sizeof band / sizeof(Band)) - 1;
@@ -312,6 +312,16 @@ SI4735 si4735;
 
 void setup()
 {
+  // Serial.begin(9600);
+  // Serial.println(analogRead(A0));
+  // Serial.println(analogRead(A1));
+  // Serial.println(analogRead(A2));
+  // Serial.println(analogRead(A3));
+  // Serial.println(analogRead(A4));
+  // Serial.println(analogRead(A5));
+  // Serial.println(analogRead(A6));
+  // Serial.println(analogRead(A7));
+  // Serial.write("Setting up pins\n");
   // Encoder pins
   pinMode(ENCODER_PIN_A, INPUT_PULLUP);
   pinMode(ENCODER_PIN_B, INPUT_PULLUP);
@@ -326,28 +336,35 @@ void setup()
   pinMode(STEP_BUTTON, INPUT_PULLUP);
   pinMode(MODE_SWITCH, INPUT_PULLUP);
 
+  // Serial.write("Setting up oled\n");
   oled.begin();
   oled.clear();
   oled.on();
   oled.setFont(FONT6X8);
 
   // Splash - Change orit for your introduction text or remove the splash code.
+  // Serial.write("Show splash screen\n");
   oled.setCursor(40, 0);
   oled.print("SI473X");
   oled.setCursor(20, 1);
   oled.print("Arduino Library");
   delay(500);
-  oled.setCursor(15, 2);
-  oled.print("All in One Radio");
+  //oled.setCursor(15, 2);
+  oled.setCursor(10, 2);
+  //oled.print("All in One Radio");
+  oled.print("V3.0.7c-By PU2CLR");
   delay(500);
   oled.setCursor(10, 3);
-  oled.print("V3.0.7c-By PU2CLR");
+  oled.print("modified by DG9VH");
+  //lightTimer = millis();
   delay(2000);
   // end Splash
 
   // If you want to reset the eeprom, keep the VOLUME_UP button pressed during statup
+  // Serial.write("Check for eeprom reset\n");
   if (digitalRead(ENCODER_BUTTON) == LOW)
   {
+    // Serial.write("Performing eeprom reset\n");
     oled.clear();
     EEPROM.write(eeprom_address, 0);
     oled.setCursor(0, 0);
@@ -355,17 +372,26 @@ void setup()
     delay(2000);
     oled.clear();
   }
+  //lightTimer = millis();
 
   // Encoder interrupt
+  // Serial.write("Init encoder\n");
   attachInterrupt(digitalPinToInterrupt(ENCODER_PIN_A), rotaryEncoder, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ENCODER_PIN_B), rotaryEncoder, CHANGE);
 
-  si4735.getDeviceI2CAddress(RESET_PIN); // Looks for the I2C bus address and set it.  Returns 0 if error
-
+  // Serial.write("Init SI4735-chip\n");
+  delay(500);
+  // Serial.println(si4735.getDeviceI2CAddress(RESET_PIN)); // Looks for the I2C bus address and set it.  Returns 0 if error
+  delay(500);
+  // Serial.write("Reset SI4735-chip\n");
+  //si4735.reset();
+  //delay(500);
+  // Serial.write("Setup SI4735-chip\n");
   si4735.setup(RESET_PIN, MW_BAND_TYPE); //
   delay(500);
 
   // Checking the EEPROM content
+  // Serial.write("Check eeprom content\n");
   if (EEPROM.read(eeprom_address) == app_id)
   {
     readAllReceiverInformation();
@@ -404,6 +430,7 @@ void rotaryEncoder()
 */
 void saveAllReceiverInformation()
 {
+  // Serial.write("saveAllReceiverInformation\n");
   int addr_offset;
   EEPROM.update(eeprom_address, app_id);                 // stores the app id;
   EEPROM.update(eeprom_address + 1, si4735.getVolume()); // stores the current Volume
@@ -429,6 +456,7 @@ void saveAllReceiverInformation()
  */
 void readAllReceiverInformation()
 {
+  // Serial.write("readAllReceiverInformation\n");
   int addr_offset;
   int bwIdx;
   volume = EEPROM.read(eeprom_address + 1); // Gets the stored volume;
@@ -522,6 +550,14 @@ void convertToChar(uint16_t value, char *strValue, uint8_t len, uint8_t dot, uin
 void muteAudio() {
   audioMuted = !audioMuted;
   si4735.setAudioMute(audioMuted);
+  if (audioMuted) {
+    oled.setCursor(0, 2);
+    oled.print("       MUTED        "); 
+  } else {
+    oled.setCursor(0, 2);
+    oled.print("                    "); 
+    showStatus();
+  }
 }
 
 /**
@@ -624,17 +660,29 @@ void showRSSI()
     bars = (rssi / 80.0) + 1;
   
   if (currentMode == AM) {
-    oled.setCursor(0, 2);
-    oled.print("RSSI: -");
-    int newrssi = 127 - rssi;
-    oled.print(newrssi);
-    oled.print(" dBuV    ");
-    for (int i = 0; i < 16; ++i) {
-      if (svalue[i].minimumdBuV >= newrssi && svalue[i].maximumdBuV < newrssi) {
-        oled.setCursor(92, 2);
-        oled.print("     ");
-        oled.setCursor(92, 2);
-        oled.print(svalue[i].sWert);
+    if (audioMuted) {
+      oled.setCursor(0, 2);
+      oled.print("       MUTED        "); 
+    } else {
+      oled.setCursor(0, 2);
+      oled.print("RSSI: -");
+      int newrssi = 127 - rssi;
+      oled.print(newrssi);
+      oled.print(" dBuV    ");
+      
+      for (int i = 0; i < 16; i++) {
+      //for (int i = 0; i < (sizeof(svalue)/sizeof(*svalue)) - 1; i++) {
+        if ((svalue[i].minimumdBuV >= newrssi) && (svalue[i].maximumdBuV < newrssi)) {
+          // Serial.print(i);
+          // Serial.print(": ");
+          // Serial.print(svalue[i].minimumdBuV);
+          // Serial.print(": ");
+          // Serial.println(svalue[i].sWert);
+          oled.setCursor(92, 2);
+          oled.print("     ");
+          oled.setCursor(92, 2);
+          oled.print(svalue[i].sWert);
+        }
       }
     }
   }
@@ -820,17 +868,22 @@ void showRDSStation()
  */
 void checkRDS()
 {
-  si4735.getRdsStatus();
-  if (si4735.getRdsReceived())
-  {
-    if (si4735.getRdsSync() && si4735.getRdsSyncFound() && !si4735.getRdsSyncLost() && !si4735.getGroupLost())
+  if (audioMuted) {
+    oled.setCursor(0, 2);
+    oled.print("       MUTED        "); 
+  } else {
+    si4735.getRdsStatus();
+    if (si4735.getRdsReceived())
     {
-      stationName = si4735.getRdsText0A();
-      if (stationName != NULL /* && si4735.getEndGroupB()  && (millis() - rdsElapsed) > 10 */)
+      if (si4735.getRdsSync() && si4735.getRdsSyncFound() && !si4735.getRdsSyncLost() && !si4735.getGroupLost())
       {
-        showRDSStation();
-        // si4735.resetEndGroupB();
-        rdsElapsed = millis();
+        stationName = si4735.getRdsText0A();
+        if (stationName != NULL /* && si4735.getEndGroupB()  && (millis() - rdsElapsed) > 10 */)
+        {
+          showRDSStation();
+          // si4735.resetEndGroupB();
+          rdsElapsed = millis();
+        }
       }
     }
   }
@@ -1105,15 +1158,11 @@ void disableCommand(bool *b, bool value, void (*showFunction)())
 
 void loop()
 {
-  // Check, if we can switch off display
-  if ((millis() - lightTimer)> MIN_LIGHT_TIME ) {
-    oled.off();
-  }
   // Check if the encoder has moved.
   if (encoderCount != 0)
   {
-    oled.on();
-    lightTimer = millis();
+    //oled.on();
+    //lightTimer = millis();
     if (cmdVolume)
       doVolume(encoderCount);
     else if (cmdAgcAtt || cmdSoftMute)
@@ -1164,24 +1213,24 @@ void loop()
     // check if some button is pressed
     if (digitalRead(BANDWIDTH_BUTTON) == LOW)
     {
-      oled.on();
-      lightTimer = millis();
+      //oled.on();
+      //lightTimer = millis();
       cmdBw = !cmdBw;
       disableCommand(&cmdBw, cmdBw, showBandwidth);
       delay(MIN_ELAPSED_TIME); // waits a little more for releasing the button.
     }
     else if (digitalRead(BAND_BUTTON) == LOW)
     {
-      oled.on();
-      lightTimer = millis();
+      //oled.on();
+      //lightTimer = millis();
       cmdBand = !cmdBand;
       disableCommand(&cmdBand, cmdBand, showBandDesc);
       delay(MIN_ELAPSED_TIME); // waits a little more for releasing the button.
     }
     else if (digitalRead(SOFTMUTE_BUTTON) == LOW)
     {
-      oled.on();
-      lightTimer = millis();
+      //oled.on();
+      //lightTimer = millis();
       if (currentMode != FM) {
         cmdSoftMute = !cmdSoftMute;
         disableCommand(&cmdSoftMute, cmdSoftMute, showAttenuation);
@@ -1190,8 +1239,8 @@ void loop()
     }
     else if (digitalRead(VOLUME_BUTTON) == LOW)
     {
-      oled.on();
-      lightTimer = millis();
+      //oled.on();
+      //lightTimer = millis();
       cmdVolume = !cmdVolume;
       disableCommand(&cmdVolume, cmdVolume, showVolume);
       delay(MIN_ELAPSED_TIME); // waits a little more for releasing the button.
@@ -1199,16 +1248,16 @@ void loop()
    else if (digitalRead(MUTE_BUTTON) == LOW)
     {
       
-      oled.on();
-      lightTimer = millis();
+      //oled.on();
+      //lightTimer = millis();
       // available to add other function
       muteAudio();
       //showStatus();
     }
     else if (digitalRead(ENCODER_BUTTON) == LOW)
     {
-      oled.on();
-      lightTimer = millis();
+      //oled.on();
+      //lightTimer = millis();
       if (currentMode == LSB || currentMode == USB)
       {
         bfoOn = !bfoOn;
@@ -1243,8 +1292,8 @@ void loop()
     }
     else if (digitalRead(AGC_BUTTON) == LOW)
     {
-      oled.on();
-      lightTimer = millis();
+      //oled.on();
+      //lightTimer = millis();
       if ( currentMode != FM) {
         cmdAgcAtt = !cmdAgcAtt;
         disableCommand(&cmdAgcAtt, cmdAgcAtt, showAttenuation);
@@ -1253,8 +1302,8 @@ void loop()
     }
     else if (digitalRead(STEP_BUTTON) == LOW)
     {
-      oled.on();
-      lightTimer = millis();
+      //oled.on();
+      //lightTimer = millis();
       if (currentMode != FM)
       {
         cmdStep = !cmdStep;
@@ -1264,8 +1313,8 @@ void loop()
     }
     else if (digitalRead(MODE_SWITCH) == LOW)
     {
-      oled.on();
-      lightTimer = millis();
+      //oled.on();
+      //lightTimer = millis();
       if (currentMode != FM)
       {
         if (currentMode == AM)
@@ -1349,4 +1398,10 @@ void loop()
     }
   }
   delay(10);
+  // Check, if we can switch off display
+  /*
+  if ((millis() - lightTimer)> MIN_LIGHT_TIME ) {
+    oled.off();
+  }
+  */
 }
