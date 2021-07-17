@@ -17,6 +17,9 @@
  * @date  2019-2020
  */
 
+#ifndef _SI4735_H // Prevent this file from being compiled more than once
+#define _SI4735_H
+
 #include <Arduino.h>
 #include <Wire.h>
 
@@ -44,6 +47,12 @@
 #define FM_AGC_OVERRIDE 0x28
 #define FM_RSQ_STATUS 0x23
 #define FM_RDS_STATUS 0x24 // Returns RDS information for current channel and reads an entry from the RDS FIFO.
+
+#define FM_NB_DETECT_THRESHOLD 0x1900 // Sets the threshold for detecting impulses in dB above the noise floor. Default value is 16.
+#define FM_NB_INTERVAL 0x1901         // Interval in micro-seconds that original samples are replaced by interpolated clean sam- ples. Default value is 24 μs.
+#define FM_NB_RATE 0x1902             // Noise blanking rate in 100 Hz units. Default value is 64.
+#define FM_NB_IIR_FILTER 0x1903       // Sets the bandwidth of the noise floor estimator Default value is 300.
+#define FM_NB_DELAY 0x1904            // Delay in micro-seconds before applying impulse blanking to the original sam- ples. Default value is 133.
 
 // FM RDS properties
 #define FM_RDS_INT_SOURCE 0x1500
@@ -193,6 +202,8 @@
 #define MAX_DELAY_AFTER_POWERUP 10       // In ms - Max delay you have to setup after a power up command.
 #define MIN_DELAY_WAIT_SEND_LOOP 300     // In uS (Microsecond) - each loop of waitToSend sould wait this value in microsecond
 #define MAX_SEEK_TIME 8000               // defines the maximum seeking time 8s is default.
+
+#define DEFAULT_CURRENT_AVC_AM_MAX_GAIN 32 
 
 #define XOSCEN_CRYSTAL 1 // Use crystal oscillator
 #define XOSCEN_RCLK 0    // Use external RCLK (crystal oscillator disabled).
@@ -1071,7 +1082,7 @@ protected:
 
     uint8_t lastMode = -1; //!<  Stores the last mode used.
 
-    uint8_t currentAvcAmMaxGain = 48;          //!<  Stores the current Automatic Volume Control Gain for AM. Default value is 48.
+    uint8_t currentAvcAmMaxGain = DEFAULT_CURRENT_AVC_AM_MAX_GAIN; //!<  Stores the current Automatic Volume Control Gain for AM.
     uint8_t currentClockType = XOSCEN_CRYSTAL; //!< Stores the current clock type used (Crystal or REF CLOCK)
     uint8_t ctsIntEnable = 0;
     uint8_t gpo2Enable = 0;
@@ -1326,15 +1337,36 @@ public:
 
     /**
      * @ingroup group17
-     * @brief Sets the Avc Am Max Gain to 48dB
-     * 
+     * @brief Sets the Avc Am Max Gain to maximum gain (0x7800)
      */
     inline void setAvcAmMaxGain()
     {
-        sendProperty(AM_AUTOMATIC_VOLUME_CONTROL_MAX_GAIN, ((currentAvcAmMaxGain = 48) * 340));
+        sendProperty(AM_AUTOMATIC_VOLUME_CONTROL_MAX_GAIN, 0x7800);
+        currentAvcAmMaxGain = 90;
     };
 
-    void setAvcAmMaxGain(uint8_t gain); //!<  Sets the maximum gain for automatic volume control.
+    /**
+     * @ingroup group17
+     * @brief Sets the Avc Am Max Gain to minimal gain (0x1000)
+     */
+    inline void setAvcAmMinGain()
+    {
+        sendProperty(AM_AUTOMATIC_VOLUME_CONTROL_MAX_GAIN, 0x1000);
+        currentAvcAmMaxGain = 12;
+    };
+
+    /**
+     * @ingroup group17
+     * @brief Sets the Avc Am Max Gain to default gain (0x2A80)
+     */
+    inline void setAvcAmDefaultGain()
+    {
+        sendProperty(AM_AUTOMATIC_VOLUME_CONTROL_MAX_GAIN, 0x1543);
+        currentAvcAmMaxGain = DEFAULT_CURRENT_AVC_AM_MAX_GAIN;
+    };
+
+
+    void setAvcAmMaxGain(uint8_t gain = 90); //!<  Sets the maximum gain for automatic volume control.
 
     /**
      * @ingroup group17
@@ -1774,6 +1806,76 @@ public:
     {
         sendProperty(FM_SOFT_MUTE_MAX_ATTENUATION, smattn);
     };
+
+    /**
+    * @brief Set the Fm Noise Blank Threshold 
+    * @details Sets the threshold for detecting impulses in dB above the noise floor. The CTS bit (and optional interrupt) is set when it is safe to send the next command.
+    * @param parameter (from 0 to 90. default is 10)
+    */
+    inline void setFmNoiseBlankThreshold(uint16_t parameter)
+    {
+        sendProperty(FM_NB_DETECT_THRESHOLD, parameter);
+    };
+
+    /**
+     * @brief Set the Fm Noise Blank 
+     * @details Sets Noise blanking rate in 100 Hz units
+     * @details Sets the Interval in micro-seconds that original samples are replaced by sample-hold clean samples.
+     * @details Sets the bandwidth of the noise floor estimator.
+     * 
+     * @details ATTENTION: It works on SI474X. It may not work on SI473X devices. 
+     * 
+     * @param nb_rate Noise blanking rate in 100 Hz units. Default value is 64.
+     * @param nb_interval Interval in micro-seconds that original samples are replaced by interpolated clean samples. Default value is 55 μs.
+     * @param nb_irr_filter Sets the bandwidth of the noise floor estimator. Default value is 300.
+     */
+    inline void setFmNoiseBlank(uint16_t nb_rate = 64, uint16_t nb_interval = 55, uint16_t nb_irr_filter = 300)
+    {
+        sendProperty(FM_NB_RATE, nb_rate);
+        sendProperty(FM_NB_INTERVAL, nb_interval);
+        sendProperty(FM_NB_IIR_FILTER, nb_irr_filter);
+    }
+
+    /**
+     * @brief Set the Fm Noise Blank Interval 
+     * @details Interval in micro-seconds that original samples are replaced by interpolated clean samples.
+     * @param parameter ( from 8 to 48. default value is 24)
+     */
+    inline void setFmNoiseBlankInterval(uint16_t parameter)
+    {
+        sendProperty(FM_NB_INTERVAL, parameter);
+    };
+
+    /**
+     * @brief Set the Fm Noise Blank Rate
+     * @details Noise blanking rate in 100 Hz units.
+     * 
+     * @param parameter ( from 1 to 64. default value is 64)
+     */
+    inline void setFmNoiseBlankRate(uint16_t parameter)
+    {
+        sendProperty(FM_NB_RATE, parameter);
+    };
+
+    /**
+     * @brief Set the Fm Noise Blank Delay
+     * @details Delay in micro-seconds before applying impulse blanking to the original samples.
+     * @param parameter ( from 125 to 219. default value is 170)
+     */
+    inline void  setFmNoiseBlankDelay(uint16_t parameter)
+    {
+        sendProperty(FM_NB_DELAY, parameter);
+    };
+
+    /**
+     * @brief Set the FmNoiseBlank IIR Filter 
+     * @details Sets the bandwidth of the noise floor estimator.
+     * @param parameter (from 300 to 1600. default value is 300)
+     */
+    inline void setFmNoiseBlank_IIR_Filter(uint16_t parameter)
+    {
+        sendProperty(FM_NB_IIR_FILTER, parameter);
+    }
 
     /**
      * @ingroup group08
@@ -2543,3 +2645,4 @@ public:
         delayMicroseconds(300);
     }
 };
+#endif // _SI4735_H

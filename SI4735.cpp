@@ -753,8 +753,8 @@ void SI4735::setAM()
         powerDown();
         setPowerUp(this->ctsIntEnable, 0, 0, this->currentClockType, AM_CURRENT_MODE, this->currentAudioMode);
         radioPowerUp();
-        setAvcAmMaxGain(currentAvcAmMaxGain); // Set AM Automatic Volume Gain to 48
-        setVolume(volume);                    // Set to previus configured volume
+        setAvcAmMaxGain(currentAvcAmMaxGain); // Set AM Automatic Volume Gain to 32
+        setVolume(volume);                       // Set to previus configured volume
     }
     currentSsbStatus = 0;
     lastMode = AM_CURRENT_MODE;
@@ -1060,21 +1060,18 @@ void SI4735::setAutomaticGainControl(uint8_t AGCDIS, uint8_t AGCIDX)
 /**
  * @ingroup group08 Automatic Volume Control
  * 
- * @brief Sets the maximum gain for automatic volume control.
+ * @brief Sets the gain for automatic volume control.
  *  
- * @details If no parameter is sent, it will be consider 48dB.
- * 
  * @see Si47XX PROGRAMMING GUIDE; AN332 (REV 1.0); page 152
  * @see setAvcAmMaxGain()
  * 
- * @param uint8_t gain  Select a value between 12 and 192.  Defaul value 48dB.
+ * @param uint8_t gain  Select a value between 12 and 90.  Defaul value 48dB.
  */
 void SI4735::setAvcAmMaxGain(uint8_t gain)
 {
-    uint16_t aux;
-    aux = (gain > 12 && gain < 193) ? (gain * 340) : (48 * 340);
+    if (gain < 12 || gain > 90) return; 
     currentAvcAmMaxGain = gain;
-    sendProperty(AM_AUTOMATIC_VOLUME_CONTROL_MAX_GAIN, aux);
+    sendProperty(AM_AUTOMATIC_VOLUME_CONTROL_MAX_GAIN, gain * 340);
 }
 
 /**
