@@ -159,15 +159,15 @@ Bandwidth bandwidthSSB[] = {
   {3, "4.0"}   // 5
 }; // 3 = 4kHz
 
-int8_t bwIdxAM = 4;
+int8_t bwIdxAM = 5;
 const int maxFilterAM = 15;
 Bandwidth bandwidthAM[] = {
   {4, "1.0"},   // 0
   {5, "1.8"},   // 1
   {3, "2.0"},   // 2
   {6, "2.5"},   // 3
-  {2, "3.0"},   // 4 - default 
-  {1, "4.0"},   // 5
+  {2, "3.0"},   // 4 
+  {1, "4.0"},   // 5 - default
   {0, "6.0"}    // 6 
 };
 
@@ -185,6 +185,35 @@ Bandwidth bandwidthFM[] = {
 uint8_t agcIdx = 0;
 uint8_t disableAgc = 0;
 uint8_t agcNdx = 0;
+
+/*
+ * S-Meter data structure
+ */
+
+typedef struct {
+  uint8_t minimumdBuV;
+  uint8_t maximumdBuV;
+  String sWert;
+} SValue;
+
+SValue svalue[] = {
+  {13, 0, "S9+60"},
+  {23, 12, "S9+50"},
+  {33, 22, "S9+40"},
+  {43, 32, "S9+30"},
+  {53, 42, "S9+20"},
+  {63, 52, "S9+10"},
+  {73, 62, "S9"},
+  {79, 72, "S8"},
+  {85, 78, "S7"},
+  {91, 84, "S6"},
+  {97, 90, "S5"},
+  {103, 96, "S4"},
+  {109, 102, "S3"},
+  {115, 108, "S2"},
+  {121, 114, "S1"},
+  {128, 120, "S0"}
+};
 
 /*
    Band data structure
@@ -488,7 +517,7 @@ void showFrequency()
   oled.setCursor(0, 0);
   oled.print(bandMode);
 
-  oled.setCursor(95, 0);
+  oled.setCursor(93, 0);
   oled.print(unit);
 }
 
@@ -543,11 +572,14 @@ void showStatus()
 
   showRSSI();
   showVolume();
+  showStereo();
 }
 
 /* *******************************
    Shows RSSI status
 */
+
+/* Origin
 void showRSSI()
 {
   int bars = (rssi / 20.0) + 1;
@@ -572,18 +604,105 @@ void showRSSI()
     oled.invertOutput(false);
   }
 }
+*/
+void showRSSI() {
+  int bars = (rssi / 20.0);
+  /*
+  int bars = 0;
+  if (currentMode == FM)
+    bars = (rssi / 20.0) + 1;
+  else
+    bars = (rssi / 80.0) + 1;
+  */
+  if (currentMode == AM || currentMode == LSB || currentMode == USB) {
+    int newrssi = 127 - rssi;
+    if (currentMode == AM) {
+      oled.setCursor(0, 2);
+      oled.print("RSSI: -");
+      oled.print(newrssi);
+      oled.print(" dBuV    ");
+    }
+    for (int i = 0; i < 16; i++) {
+      //for (int i = 0; i < (sizeof(svalue)/sizeof(*svalue)) - 1; i++) {
+      if ((svalue[i].minimumdBuV >= newrssi) && (svalue[i].maximumdBuV < newrssi)) {
+        // Serial.print(i);
+        // Serial.print(": ");
+        // Serial.print(svalue[i].minimumdBuV);
+        // Serial.print(": ");
+        // Serial.println(svalue[i].sWert);
+        if (currentMode == AM) {
+          oled.setCursor(93, 2);
+          oled.print("     ");
+          oled.setCursor(93, 2);
+          oled.print(svalue[i].sWert);
+        } else {
+          oled.setCursor(64, 2);
+          oled.print("     ");
+          oled.setCursor(64, 2);
+          oled.print(svalue[i].sWert);
+        }
+      }
+    }
+  }
+  if (currentMode == FM) {
+    oled.setCursor(90, 3);
+    oled.print("      ");
+    oled.setCursor(90, 3);
+    
+    oled.fillLength(62, (rssi/2));
+    /*
+    oled.print(".");
+    for (int i = 0; i < bars; i++)
+      oled.print('_');
+    oled.print('|');
+    */
+  } else {
+    oled.setCursor(62, 3);
+    oled.print("         ");
+    /*
+    oled.setCursor(60, 3);
+    for (int i = 0; i < (rssi/2); i++) {
+      oled.setCursor(60 + i, 3);
+      oled.print('|');
+    }
+    */
+    oled.setCursor(62, 3);
+    oled.fillLength(62, (rssi/2));
+  }
+  
+  if (currentMode == FM)
+  {
+    oled.setCursor(18, 0);
+    oled.print("  ");
+    oled.setCursor(18, 0);
+    oled.invertOutput(true);
+    if (si4735.getCurrentPilot())
+    {
+      oled.invertOutput(true);
+      oled.print("s");
+    }
+    oled.invertOutput(false);
+  }
+}
 
 /*
    Shows the volume level on LCD
 */
 void showVolume()
 {
-  oled.setCursor(60, 3);
+  oled.setCursor(46, 3);
   oled.print("  ");
-  oled.setCursor(60, 3);
+  oled.setCursor(46, 3);
   oled.print(si4735.getCurrentVolume());
 }
 
+void showStereo() {
+  oled.setCursor(65, 3);
+  if(fmStereo && currentMode == FM)
+    oled.print("ST");
+  else
+    oled.print("  ");
+}
 
 /**
    SHow bandwidth on AM,SSB and FM mode
@@ -761,7 +880,10 @@ void useBand()
     bfoOn = ssbLoaded = false;
     si4735.setRdsConfig(1, 2, 2, 2, 2);
     bwIdxFM = band[bandIdx].bandwidth; 
-    si4735.setFmBandwidth(bandwidthFM[bwIdxFM].idx);    
+    si4735.setFmBandwidth(bandwidthFM[bwIdxFM].idx);
+    
+    oled.setCursor(62, 3);
+    oled.clearToEOL();    
   }
   else
   {
@@ -957,10 +1079,12 @@ void loop()
       if (currentMode == FM)
       {
         fmStereo = !fmStereo;
-        if (fmStereo)
+        if (fmStereo) {
           si4735.setFmStereoOn();
-        else
+        } else {
           si4735.setFmStereoOff(); // It is not working so far.
+        }
+        delay(MIN_ELAPSED_TIME); // waits a little more for releasing the button.
       }
       else
       {
@@ -990,7 +1114,9 @@ void loop()
         resetEepromDelay();
         delay(MIN_ELAPSED_TIME); // waits a little more for releasing the button.
       }
+      showStereo();
     }
+/*    
     else if (digitalRead(MODE_SWITCH) == LOW)
     {
       if (currentMode != FM)
@@ -1019,7 +1145,49 @@ void loop()
     }
     elapsedButton = millis();
   }
-
+*/
+    else if (digitalRead(MODE_SWITCH) == LOW)
+    {
+      if (currentMode != FM)
+      {
+        if (currentMode == AM)
+        {
+          // If you were in AM mode, it is necessary to load SSB patch (avery time)
+          loadSSB();
+          if (currentFrequency > 10000) {
+            currentMode = USB;
+          } else {
+            currentMode = LSB;
+          }
+        }
+        else if (currentMode == LSB)
+        {
+          if (currentFrequency <= 10000) {
+            currentMode = USB;
+          } else {
+            currentMode = AM;
+            ssbLoaded = false;
+            bfoOn = false;
+          }
+        }
+        else if (currentMode == USB)
+        {
+          if (currentFrequency > 10000) {
+            currentMode = LSB;
+          } else {
+            currentMode = AM;
+            ssbLoaded = false;
+            bfoOn = false;
+          }
+        }
+        // Nothing to do if you are in FM mode
+        band[bandIdx].currentFreq = currentFrequency;
+        band[bandIdx].currentStep = currentStep;
+        useBand();
+      }
+    }
+    elapsedButton = millis();
+  }
   // Show RSSI status only if this condition has changed
   if ((millis() - elapsedRSSI) > MIN_ELAPSED_RSSI_TIME * 9)
   {
