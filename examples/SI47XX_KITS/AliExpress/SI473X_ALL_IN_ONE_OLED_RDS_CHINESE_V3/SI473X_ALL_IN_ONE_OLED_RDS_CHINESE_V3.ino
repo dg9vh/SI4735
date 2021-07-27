@@ -74,6 +74,8 @@
 const uint16_t size_content = sizeof ssb_patch_content; // See ssb_patch_content.h
 const uint16_t cmd_0x15_size = sizeof cmd_0x15;         // Array of lines where the 0x15 command occurs in the patch content.
 
+#define BAUDRATE 9600
+
 #define FM_BAND_TYPE 0
 #define MW_BAND_TYPE 1
 #define SW_BAND_TYPE 2
@@ -267,12 +269,17 @@ uint8_t rssi = 0;
 uint8_t stereo = 1;
 uint8_t volume = DEFAULT_VOLUME;
 
+String catCommand = "";
+
 // Devices class declarations
 Rotary encoder = Rotary(ENCODER_PIN_A, ENCODER_PIN_B);
 SI4735 si4735;
 
 void setup()
 {
+  // Init Serial-Port
+  Serial.begin(BAUDRATE);
+  
   // Encoder pins
   pinMode(ENCODER_PIN_A, INPUT_PULLUP);
   pinMode(ENCODER_PIN_B, INPUT_PULLUP);
@@ -298,11 +305,11 @@ void setup()
   oled.setCursor(20, 1);
   oled.print("Arduino Library");
   delay(500);
-  oled.setCursor(15, 2);
-  oled.print("All in One Radio");
-  delay(500);
-  oled.setCursor(10, 3);
+  oled.setCursor(10, 2);
   oled.print("V3.0.4 - By PU2CLR");
+  delay(500);
+  oled.setCursor(12, 3);
+  oled.print("Modified by DG9VH");
   delay(1000);
   // end Splash
 
@@ -326,8 +333,9 @@ void setup()
 
   si4735.getDeviceI2CAddress(RESET_PIN); // Looks for the I2C bus address and set it.  Returns 0 if error
 
-  si4735.setup(RESET_PIN, MW_BAND_TYPE); // 
+  si4735.setup(RESET_PIN, MW_BAND_TYPE); //
   delay(300);
+  si4735.setAvcAmMaxGain(48); 
 
   // Checking the EEPROM content
   if (EEPROM.read(eeprom_address) == app_id)
@@ -571,103 +579,33 @@ void showStatus()
   }
 
   showRSSI();
+  showSValue();
+  showSMeter();
   showVolume();
+  showVoltage();
   showStereo();
+}
+
+void showVoltage() {
+  oled.setCursor(0, 2);
+  oled.print("  ");
+  oled.setCursor(0, 2);
+  oled.print(readVcc());
+  oled.print("V");
 }
 
 /* *******************************
    Shows RSSI status
 */
-
-/* Origin
-void showRSSI()
-{
-  int bars = (rssi / 20.0) + 1;
-  oled.setCursor(90, 3);
-  oled.print("      ");
-  oled.setCursor(90, 3);
-  oled.print(".");
-  for (int i = 0; i < bars; i++)
-    oled.print('_');
-  oled.print('|');
-
-  if (currentMode == FM)
-  {
-    oled.setCursor(18, 0);
-    oled.print("  ");
-    oled.setCursor(18, 0);
-    oled.invertOutput(true);
-    if (si4735.getCurrentPilot() )  {
-       oled.invertOutput(true);
-       oled.print("s");
-     } 
-    oled.invertOutput(false);
-  }
-}
-*/
 void showRSSI() {
-  int bars = (rssi / 20.0);
-  /*
-  int bars = 0;
-  if (currentMode == FM)
-    bars = (rssi / 20.0) + 1;
-  else
-    bars = (rssi / 80.0) + 1;
-  */
   if (currentMode == AM || currentMode == LSB || currentMode == USB) {
     int newrssi = 127 - rssi;
     if (currentMode == AM) {
-      oled.setCursor(0, 2);
-      oled.print("RSSI: -");
+      oled.setCursor(35, 2);
+      oled.print("-");
       oled.print(newrssi);
       oled.print(" dBuV    ");
     }
-    for (int i = 0; i < 16; i++) {
-      //for (int i = 0; i < (sizeof(svalue)/sizeof(*svalue)) - 1; i++) {
-      if ((svalue[i].minimumdBuV >= newrssi) && (svalue[i].maximumdBuV < newrssi)) {
-        // Serial.print(i);
-        // Serial.print(": ");
-        // Serial.print(svalue[i].minimumdBuV);
-        // Serial.print(": ");
-        // Serial.println(svalue[i].sWert);
-        if (currentMode == AM) {
-          oled.setCursor(93, 2);
-          oled.print("     ");
-          oled.setCursor(93, 2);
-          oled.print(svalue[i].sWert);
-        } else {
-          oled.setCursor(64, 2);
-          oled.print("     ");
-          oled.setCursor(64, 2);
-          oled.print(svalue[i].sWert);
-        }
-      }
-    }
-  }
-  if (currentMode == FM) {
-    oled.setCursor(90, 3);
-    oled.print("      ");
-    oled.setCursor(90, 3);
-    
-    oled.fillLength(62, (rssi/2));
-    /*
-    oled.print(".");
-    for (int i = 0; i < bars; i++)
-      oled.print('_');
-    oled.print('|');
-    */
-  } else {
-    oled.setCursor(62, 3);
-    oled.print("         ");
-    /*
-    oled.setCursor(60, 3);
-    for (int i = 0; i < (rssi/2); i++) {
-      oled.setCursor(60 + i, 3);
-      oled.print('|');
-    }
-    */
-    oled.setCursor(62, 3);
-    oled.fillLength(62, (rssi/2));
   }
   
   if (currentMode == FM)
@@ -682,6 +620,42 @@ void showRSSI() {
       oled.print("s");
     }
     oled.invertOutput(false);
+  }
+}
+
+void showSValue() {
+    if (currentMode == AM || currentMode == LSB || currentMode == USB) {
+    int newrssi = 127 - rssi;
+    
+    for (int i = 0; i < 16; i++) {
+      if ((svalue[i].minimumdBuV >= newrssi) && (svalue[i].maximumdBuV < newrssi)) {
+        if (currentMode == AM) {
+          oled.setCursor(93, 2);
+          oled.print("     ");
+          oled.setCursor(93, 2);
+          oled.print(svalue[i].sWert);
+        } else {
+          oled.setCursor(64, 2);
+          oled.print("     ");
+          oled.setCursor(64, 2);
+          oled.print(svalue[i].sWert);
+        }
+      }
+    }
+  }
+}
+
+void showSMeter() {
+  if (currentMode == FM) {
+    oled.setCursor(90, 3);
+    oled.print("      ");
+    oled.setCursor(90, 3);
+    oled.fillLength(62, (rssi/2));
+  } else {
+    oled.setCursor(62, 3);
+    oled.print("         ");
+    oled.setCursor(62, 3);
+    oled.fillLength(62, (rssi/2));
   }
 }
 
@@ -920,9 +894,74 @@ void useBand()
   showStatus();
   resetEepromDelay();
 }
+/*
+String decodeSerialCommand() {
+  int incomingByte = Serial.read();
+  if (incomingByte == 13) {
+    char cmd = catCommand[0];
+    int value = catCommand.substring(1).toInt();
+    switch (cmd) {
+      case 'F':
+        // set frequency
+        Serial.println();
+        Serial.print("New frequency: ");
+        Serial.println(value);
+        break;
+      case 'B':
+        // set bandwidth
+        Serial.println();
+        Serial.print("New bandwidth: ");
+        Serial.println(value);
+        break;
+      case 'V':
+        // set volume
+        Serial.println();
+        if (value >= 0 && value <= 63) {
+          Serial.print("New volume: ");
+          Serial.println(value);
+          si4735.setVolume(value);
+          //oled.clear();
+          //showStatus();
+        } else {
+          Serial.println("ERROR: Illegal value");
+        }
+        break;
+      default:
+        break;
+    }
+    catCommand = "";
+  } else {
+    if (incomingByte >= 65 && incomingByte <= 90) {
+      catCommand = char(incomingByte);
+    }
+    if (incomingByte >= 48 && incomingByte <= 57) {
+      catCommand += char(incomingByte);
+    }
+  }
+}
+*/
+
+float readVcc() {
+  long result;
+  // Read 1.1V reference against AVcc
+  ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+  delay(2); // Wait for Vref to settle
+  ADCSRA |= _BV(ADSC); // Convert
+  while (bit_is_set(ADCSRA,ADSC));
+  result = ADCL;
+  result |= ADCH<<8;
+  result = 1126400L / result; // Back-calculate AVcc in mV
+  return result/1000;
+}
 
 void loop()
 {
+  // Read CAT-Command
+  /*
+  if (Serial.available() > 0) {
+    decodeSerialCommand();
+  }
+  */
   // Check if the encoder has moved.
   if (encoderCount != 0)
   {
@@ -1116,36 +1155,6 @@ void loop()
       }
       showStereo();
     }
-/*    
-    else if (digitalRead(MODE_SWITCH) == LOW)
-    {
-      if (currentMode != FM)
-      {
-        if (currentMode == AM)
-        {
-          // If you were in AM mode, it is necessary to load SSB patch (avery time)
-          loadSSB();
-          currentMode = LSB;
-        }
-        else if (currentMode == LSB)
-        {
-          currentMode = USB;
-        }
-        else if (currentMode == USB)
-        {
-          currentMode = AM;
-          ssbLoaded = false;
-          bfoOn = false;
-        }
-        // Nothing to do if you are in FM mode
-        band[bandIdx].currentFreq = currentFrequency;
-        band[bandIdx].currentStep = currentStep;
-        useBand();
-      }
-    }
-    elapsedButton = millis();
-  }
-*/
     else if (digitalRead(MODE_SWITCH) == LOW)
     {
       if (currentMode != FM)
@@ -1197,6 +1206,9 @@ void loop()
     {
       rssi = aux;
       showRSSI();
+      showVoltage();
+      showSValue();
+      showSMeter();
     }
     elapsedRSSI = millis();
   }
