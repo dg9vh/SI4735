@@ -582,8 +582,15 @@ void showStatus()
   showSValue();
   showSMeter();
   showVolume();
-  showVoltage();
+  showClock();
   showStereo();
+}
+
+void showClock() {
+  oled.setCursor(0, 2);
+  oled.print("  ");
+  oled.setCursor(0, 2);
+  oled.print(si4735.getRdsTime());
 }
 
 void showVoltage() {
@@ -1206,7 +1213,7 @@ void loop()
     {
       rssi = aux;
       showRSSI();
-      showVoltage();
+      showClock();
       showSValue();
       showSMeter();
     }
