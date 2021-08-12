@@ -586,6 +586,14 @@ void showStatus()
   showStereo();
 }
 
+void showSNR() {
+  oled.setCursor(0, 2);
+  oled.print("    ");
+  oled.setCursor(0, 2);
+  oled.print(si4735.getCurrentSNR());
+  oled.print("dB");
+}
+
 void showClock() {
   oled.setCursor(0, 2);
   oled.print("  ");
@@ -1213,7 +1221,7 @@ void loop()
     {
       rssi = aux;
       showRSSI();
-      showClock();
+      showSNR();
       showSValue();
       showSMeter();
     }
