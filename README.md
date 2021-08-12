@@ -1050,7 +1050,7 @@ The table below shows the some boards where this library has been successfully t
 
 <BR> 
 
-The table below shows some SI473X chips and Si4730 based-boards where the PU2CLR SI4735 Arduino Library has been successfully tested. 
+The table below shows some SI473X, SI474X devices and Si4730 based-boards where the __PU2CLR SI4735 Arduino Library__ has been successfully tested. 
 
 | SI473X board / IC        | FM | RDS | AM | SSB | LW | MW | SW | Tested | 
 | -------------------------| -- | --- | -- | --- | -- | -- | -- | ------ | 
@@ -1061,6 +1061,7 @@ The table below shows some SI473X chips and Si4730 based-boards where the PU2CLR
 | SI4734-D60               |  X |     | X  |     |  X |  X | X  |   Yes  |
 | NE928-10A SI4730         |  X |     | X  |     |    |    |    |   Yes  | 
 | PL102BA V2.11 10628 (*2) |  X | X*  | X  |     | X* |  X | X* |   Yes  |
+| SI4743-C10               |  X | X   | X  |     | X  |  X | X  |   Yes  | 
 | SI4745-C10               |  X | X   | X  |     | X  |  X | X  |   Yes  | 
  
 *1 -  __Acording to Silicon Labs guide AN332, the SI4732-A10 has the same firmware FMRX component and AM_SW_LW RX component as that of SI4735-D60. See Si47XX PROGRAMMING GUIDE; AN332; page 2. So, like the SI4735-D60, it is possible to use it to listen to SSB mode with the SI4732-A10__.
@@ -1251,6 +1252,14 @@ Here you can see some experiments using this library. Watch them.
 * [Dual Conversion HF Receiver Silabs Si4732/Si4735 and Si5351](https://lu7ads.blogspot.com/?fbclid=IwAR0TNxYh9SkS5T7RA_0mm2rZs4ycP7e0Y-SH6ORsT5Uj0C0wFKSEg6Gqd20)
 * [Manufacture of 50MHz AM QRP transceiver TRX-505 / JR0DBK](https://yuki-lab.jp/hw/trx-505/index.html?fbclid=IwAR2IWnGjvKpN4LBfQiB4-6j4hDODlqzjMvfZbzB5DdnWvzJHcDYc2AbrFrU)
 
+#### Videos that powered the standalone SI473X devices: 
+
+* [Prepper Radios: SI4732 All Band Shortwave Radio](https://youtu.be/6cyw0diZVTI)
+* [AM/FM/SW/LW радиоприемник Si4730/Si4735](https://youtu.be/gKCR7FTb9g4)
+* [Si4735 All in One Receiver running on Arduino Pro Mini 3.3V (8MHz) and TFT Display](https://youtu.be/oL8qyRglZ8I)
+
+
+
 
 [Go to contents](https://pu2clr.github.io/SI4735/#contents)
 
@@ -1258,7 +1267,7 @@ Here you can see some experiments using this library. Watch them.
 
 The table below shows some radios based on SI47XX  
 
-| Manufacturer | Model | CI |More information |
+| Manufacturer | Model | Device |More information |
 | ------------ | ----- | ---- |----------- | 
 | Tecsun | PL310ET | Si4734 |[About](https://www.tecsunradios.com.au/store/product/tecsun-pl310et-multi-band-radio/)|
 | Tecsun | PL-365 | Si4735 |[Review](https://swling.com/blog/2017/02/charlie-reviews-the-tecsun-pl-365/)|
@@ -1272,7 +1281,7 @@ The table below shows some radios based on SI47XX
 | Degen | DE1127 (discontinued) | Si4734 | [Review](https://herculodge.typepad.com/herculodge/2012/01/dave-zantow-provides-firmware-updates-for-degen-de1127-and-de1126-models.html) |
 | Sangean | ATS-909X |  Si4735 | [Review](https://swling.com/blog/tag/sangean-ats-909x-review/) |
 | XHDATA | D808 | Si4735 |[Review](https://swling.com/blog/2018/04/a-detailed-review-of-the-xhdata-d-808-and-comparison-with-the-tecsun-pl-660/)|
-| RADIWOW | R-108 |  | [Review](https://www.hagensieker.com/wordpress/2019/05/08/radiwow-r-108-short-wave-radio-review/)|
+| RADIWOW | R-108 | SI4734 | [Review](https://www.hagensieker.com/wordpress/2019/05/08/radiwow-r-108-short-wave-radio-review/)|
 | C Crane |  CC Skywave |  |[Review](https://swling.com/blog/2014/12/review-of-the-c-crane-cc-skywave-portable-radio/) |
 
 [Go to contents](https://pu2clr.github.io/SI4735/#contents)

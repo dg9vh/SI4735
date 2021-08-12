@@ -16,6 +16,7 @@ __DO NOT BUY THIS RECEIVER BEFORE READING COMMENTS AND REPORTS ABOUT IT. FOLLOW 
 * [SI4735 SI4732 All Band Radio Receiver User Group](https://www.facebook.com/groups/340642344032449)
 * [SI4732 shortwave receiver](https://swli-05940-mi.blogspot.com/2021/04/si4732-shortwave-receiver.html)
 * [Amazon - Customer reviews](https://www.amazon.com/product-reviews/B08ZHXWTS1)
+* [Si4732 ATS-20 Test and Update - Open Source Receiver 0-30 / 64-108](https://youtu.be/381139I2DCg)
 
 
 The photos below show the KIT sold on Aliexpress and eBay.
@@ -155,7 +156,6 @@ Finally, run the upload.
 ![Firmware Update 12](./images/OLED02.png)
 
 
-
 # User Manual 
 
 
@@ -171,9 +171,14 @@ Press the __VOL+__ push button and rotate the  encoder. Press the button again t
 
 Press the __BAND+__ push button and rotate the  encoder. Press the button again to disable the command or wait for 4s;
 
-### DEALING WITH AGC AND ATTENUATION
+### DEALING WITH AGC (Automatic Gain Control) AND ATTENUATION
 
 Press the __AGC__ push button and rotate the  encoder. Press the button again to disable the command or wait for 4s;
+
+### DEALING WITH AVC (Automatic Volume Control) 
+
+Press the __AVC__ push button and rotate the  encoder. Press the button again to disable the command or wait for 4s;
+
 
 ###  DEALING WITH SOFTMUTE AND ATTENUATION
 
@@ -205,3 +210,7 @@ The direction of the seek up or seek down will  depend on the last rotating move
 
 __Turn your receiver on with the encoder push button pressed__.    
 
+
+See also: 
+* [#205 Si4732 ATS-20 Test and Update - Open Source Receiver 0-30 / 64-108](https://youtu.be/381139I2DCg)
+  

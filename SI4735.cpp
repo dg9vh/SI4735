@@ -753,7 +753,7 @@ void SI4735::setAM()
         powerDown();
         setPowerUp(this->ctsIntEnable, 0, 0, this->currentClockType, AM_CURRENT_MODE, this->currentAudioMode);
         radioPowerUp();
-        setAvcAmMaxGain(currentAvcAmMaxGain); // Set AM Automatic Volume Gain to 32
+        setAvcAmMaxGain(currentAvcAmMaxGain);    // Set AM Automatic Volume Gain (default value is DEFAULT_CURRENT_AVC_AM_MAX_GAIN)
         setVolume(volume);                       // Set to previus configured volume
     }
     currentSsbStatus = 0;
@@ -1043,6 +1043,7 @@ void SI4735::setAutomaticGainControl(uint8_t AGCDIS, uint8_t AGCIDX)
     else
         cmd = AM_AGC_OVERRIDE;
 
+    agc.arg.DUMMY = 0; // ARG1: bits 7:1 Always write to 0;
     agc.arg.AGCDIS = AGCDIS;
     agc.arg.AGCIDX = AGCIDX;
 
@@ -1448,7 +1449,7 @@ void SI4735::setSeekFmRssiThreshold(uint16_t value)
     sendProperty(FM_SEEK_TUNE_RSSI_THRESHOLD, value);
 }
 
-/** @defgroup group10 Tools method 
+/** @defgroup group10 Generic SI473X Command and Property methods 
  * @details A set of functions used to support other functions
 */
 
@@ -2427,11 +2428,15 @@ char *SI4735::getRdsText2B(void)
 }
 
 /**
- * @ingroup group16 RDS status 
+ * @ingroup group16 RDS Time and Date 
  * 
  * @brief Gets the RDS time and date when the Group type is 4 
+ * @details Returns theUTC Time and offset (to convert it to local time)
+ * @details return examples: 
+ * @details                 12:31 +03:00 
+ * @details                 21:59 -02:30
  * 
- * @return char* a string with hh:mm +/- offset
+ * @return  point to char array. Format:  +/-hh:mm (offset)
  */
 char *SI4735::getRdsTime()
 {
@@ -2467,7 +2472,205 @@ char *SI4735::getRdsTime()
         offset_h = (dt.refined.offset * 30) / 60;
         offset_m = (dt.refined.offset * 30) - (offset_h * 60);
         // sprintf(rds_time, "%02u:%02u %c%02u:%02u", dt.refined.hour, dt.refined.minute, offset_sign, offset_h, offset_m);
-        sprintf(rds_time, "%02u:%02u %c%02u:%02u", hour, minute, offset_sign, offset_h, offset_m);
+        // sprintf(rds_time, "%02u:%02u %c%02u:%02u", hour, minute, offset_sign, offset_h, offset_m);
+
+        // Using convertToChar instead sprintf to save space (about 1.2K on ATmega328 compiler tools).
+    
+        this->convertToChar(hour, rds_time, 2, 0, ' ', false);
+        rds_time[2] = ':';
+        this->convertToChar(minute, &rds_time[3], 2, 0, ' ', false);
+        rds_time[5] = ' ';
+        rds_time[6] = offset_sign;
+        this->convertToChar(offset_h, &rds_time[7], 2, 0, ' ', false);
+        rds_time[9] = ':';
+        this->convertToChar(offset_m, &rds_time[10], 2, 0, ' ', false);
+        rds_time[12] = '\0';
+        
+            
+        return rds_time;
+    }
+
+    return NULL;
+}
+
+/**
+ * @ingroup group16 RDS Modified Julian Day Converter (MJD) 
+ * @brief Converts the MJD number to integers Year, month and day
+ * @details Calculates day, month and year based on MJD
+ * @details This MJD algorithm is an adaptation of the javascript code found at http://www.csgnetwork.com/julianmodifdateconv.html
+ * @param mjd   mjd number 
+ * @param year  year variable reference 
+ * @param month month variable reference 
+ * @param day day variable reference 
+ */
+void SI4735::mjdConverter(uint32_t mjd, uint32_t *year, uint32_t *month, uint32_t *day)
+{
+    uint32_t jd, ljd, njd;
+    jd = mjd + 2400001;
+    ljd = jd + 68569;
+    njd = (uint32_t)(4 * ljd / 146097);
+    ljd = ljd - (uint32_t)((146097 * njd + 3) / 4);
+    *year = (uint32_t)(4000 * (ljd + 1) / 1461001);
+    ljd = ljd - (uint32_t)((1461 * (*year) / 4)) + 31;
+    *month = (uint32_t)(80 * ljd / 2447);
+    *day = ljd - (uint32_t)(2447 * (*month) / 80);
+    ljd = (uint32_t)(*month / 11);
+    *month = (uint32_t)(*month + 2 - 12 * ljd);
+    *year = (uint32_t)(100 * (njd - 49) + (*year) + ljd);
+}
+
+/**
+ * @ingroup group16 RDS Time and Date
+ * @brief   Decodes the RDS time to LOCAL Julian Day and time
+ * @details This method gets the RDS date time massage and converts it from MJD to JD and UTC time to local time
+ * @details The Date and Time service may not work correctly depending on the FM station that provides the service. 
+ * @details I have noticed that some FM stations do not use the service properly in my location.  
+ * @details Example:
+ * @code
+ *      uint16_t year, month, day, hour, minute;
+ *      .
+ *      .
+ *      si4735.getRdsStatus();
+ *      si4735.getRdsDateTime(&year, &month, &day, &hour, &minute);
+ *      .
+ *      .        
+ * @endcode
+ * @param rYear  year variable reference 
+ * @param rMonth month variable reference 
+ * @param rDay day variable reference 
+ * @param rHour local hour variable reference 
+ * @param rMinute local minute variable reference 
+ * @return true, it the RDS Date and time were processed 
+ */
+bool SI4735::getRdsDateTime(uint16_t *rYear, uint16_t *rMonth, uint16_t *rDay, uint16_t *rHour, uint16_t *rMinute)
+{
+    si47x_rds_date_time dt;
+
+    int16_t local_minute;
+    uint16_t minute;
+    uint16_t hour;
+    uint32_t mjd, day, month, year;
+
+    if (getRdsGroupType() == 4)
+    {
+
+        dt.raw[4] = currentRdsStatus.resp.BLOCKBL;
+        dt.raw[5] = currentRdsStatus.resp.BLOCKBH;
+        dt.raw[2] = currentRdsStatus.resp.BLOCKCL;
+        dt.raw[3] = currentRdsStatus.resp.BLOCKCH;
+        dt.raw[0] = currentRdsStatus.resp.BLOCKDL;
+        dt.raw[1] = currentRdsStatus.resp.BLOCKDH;
+
+        // Unfortunately the resource below was necessary dues to  the GCC compiler on 32-bit platform.
+        // See si47x_rds_date_time (typedef union) and CGG “Crosses boundary” issue/features.
+        // Now it is working on Atmega328, STM32, Arduino DUE, ESP32 and more.
+
+        mjd = (uint32_t)dt.refined.mjd2 << 15;
+        mjd |= dt.refined.mjd1;
+
+        minute = (dt.refined.minute2 << 2) | dt.refined.minute1;
+        hour = (dt.refined.hour2 << 4) | dt.refined.hour1;
+
+        // calculates the jd Year, Month and Day base on mjd number
+        // mjdConverter(mjd, &year, &month, &day);
+
+        // Converting UTC to local time
+        local_minute = ((hour * 60) + minute) + ((dt.refined.offset * 30) * ((dt.refined.offset_sense == 1) ? -1 : 1));
+        if (local_minute < 0) {
+            local_minute += 1440;
+            mjd--;  // drecreases one day 
+        }
+        else if (local_minute > 1440)
+        {
+            local_minute -= 1440;
+            mjd++; // increases one day
+        }
+
+        // calculates the jd Year, Month and Day base on mjd number
+        mjdConverter(mjd, &year, &month, &day);
+
+        hour = (uint16_t)local_minute / 60;
+        minute = local_minute - ( hour * 60);
+
+        *rYear = (uint16_t)year;
+        *rMonth = (uint16_t) month;
+        *rDay = (uint16_t) day;
+        *rHour = hour;
+        *rMinute = minute;
+
+        return true;
+
+    }
+    return false;
+}
+
+/**
+ * @ingroup group16 RDS Time and Date
+ * @brief Gets the RDS the Time and Date when the Group type is 4 
+ * @details Returns the Date, UTC Time and offset (to convert it to local time)
+ * @details return examples: 
+ * @details                 2021-07-29 12:31 +03:00 
+ * @details                 1964-05-09 21:59 -02:30
+ * 
+ * @return array of char yy-mm-dd hh:mm +/-hh:mm offset
+ */
+char *SI4735::getRdsDateTime()
+{
+    si47x_rds_date_time dt;
+
+    uint16_t minute;
+    uint16_t hour;
+    uint32_t mjd, day, month, year;    
+
+    if (getRdsGroupType() == 4)
+    {
+        char offset_sign;
+        int offset_h;
+        int offset_m;
+
+        dt.raw[4] = currentRdsStatus.resp.BLOCKBL;
+        dt.raw[5] = currentRdsStatus.resp.BLOCKBH;
+        dt.raw[2] = currentRdsStatus.resp.BLOCKCL;
+        dt.raw[3] = currentRdsStatus.resp.BLOCKCH;
+        dt.raw[0] = currentRdsStatus.resp.BLOCKDL;
+        dt.raw[1] = currentRdsStatus.resp.BLOCKDH;
+
+        // Unfortunately the resource below was necessary dues to  the GCC compiler on 32-bit platform.
+        // See si47x_rds_date_time (typedef union) and CGG “Crosses boundary” issue/features.
+        // Now it is working on Atmega328, STM32, Arduino DUE, ESP32 and more.
+
+        mjd = (uint32_t) dt.refined.mjd2 << 15;
+        mjd |= dt.refined.mjd1;
+
+        minute = (dt.refined.minute2 << 2) | dt.refined.minute1;
+        hour = (dt.refined.hour2 << 4) | dt.refined.hour1;
+
+        // calculates the jd (Year, Month and Day) base on mjd number
+        mjdConverter(mjd, &year, &month, &day);
+
+        // Calculating hour, minute and offset
+        offset_sign = (dt.refined.offset_sense == 1) ? '+' : '-';
+        offset_h = (dt.refined.offset * 30) / 60;
+        offset_m = (dt.refined.offset * 30) - (offset_h * 60);
+
+        // Converting the result to array char - 
+        // Using convertToChar instead sprintf to save space (about 1.2K on ATmega328 compiler tools).
+
+        this->convertToChar(year, rds_time, 4, 0, ' ', false);
+        rds_time[4] = '-';
+        this->convertToChar(month, &rds_time[5], 2, 0, ' ', false);
+        rds_time[7] = '-';
+        this->convertToChar(day, &rds_time[8], 2, 0, ' ', false);
+        rds_time[10] = ' ';
+        this->convertToChar(hour, &rds_time[11], 2, 0, ' ', false);
+        rds_time[13] = ':';
+        this->convertToChar(minute, &rds_time[14], 2, 0, ' ', false);
+        rds_time[16] = ' ';
+        rds_time[17] = offset_sign;
+        this->convertToChar(offset_h, &rds_time[18], 2, 0, ' ', false);
+        rds_time[20] = ':';
+        this->convertToChar(offset_m, &rds_time[21], 2, 0, ' ', false);
+        rds_time[23] = '\0';
 
         return rds_time;
     }
@@ -2523,7 +2726,7 @@ char *SI4735::getRdsTime()
  * @see AN332 REV 0.8 UNIVERSAL PROGRAMMING GUIDE; pages 3 and 5 
  */
 
-/**
+    /**
  * @ingroup group17 Patch and SSB support 
  *  
  * @brief Sets the SSB Beat Frequency Offset (BFO). 
@@ -2532,7 +2735,8 @@ char *SI4735::getRdsTime()
  * 
  * @param offset 16-bit signed value (unit in Hz). The valid range is -16383 to +16383 Hz. 
  */
-void SI4735::setSSBBfo(int offset)
+    void
+    SI4735::setSSBBfo(int offset)
 {
 
     si47x_property property;
@@ -2829,10 +3033,11 @@ void SI4735::getSsbAgcStatus()
  * @param uint8_t SSBAGCNDX If 1, this byte forces the AGC gain index. if 0,  Minimum attenuation (max gain)
  *                
  */
-void SI4735::setSsbAgcOverrite(uint8_t SSBAGCDIS, uint8_t SSBAGCNDX)
+void SI4735::setSsbAgcOverrite(uint8_t SSBAGCDIS, uint8_t SSBAGCNDX, uint8_t reserved)
 {
     si47x_agc_overrride agc;
 
+    agc.arg.DUMMY = reserved; // ARG1: bits 7:1 - The manual says: Always write to 0;
     agc.arg.AGCDIS = SSBAGCDIS;
     agc.arg.AGCIDX = SSBAGCNDX;
 
@@ -3179,6 +3384,52 @@ si4735_eeprom_patch_header SI4735::downloadPatchFromEeprom(int eeprom_i2c_addres
 
     delay(50);
     return eep;
+}
+
+/** @defgroup group18 Tools method 
+ * @details A set of functions used to support other functions
+*/
+
+/**
+ * @ingroup group18 Covert numbers to char array
+ * @brief Converts a number to a char array 
+ * @details It is useful to mitigate memory space used by functions like sprintf or othetr generic similar functions
+ * @details You can use it to format frequency using decimal or tousand separator and also to convert smalm numbers.      
+ * 
+ * @param value  value to be converted
+ * @param strValue char array that will be receive the converted value 
+ * @param len final string size (in bytes) 
+ * @param dot the decimal or tousand separator position
+ * @param separator symbol "." or "," 
+ * @param remove_leading_zeros if true removes up to two leading zeros 
+ */
+void SI4735::convertToChar(uint16_t value, char *strValue, uint8_t len, uint8_t dot, uint8_t separator, bool remove_leading_zeros)
+{
+    char d;
+    for (int i = (len - 1); i >= 0; i--)
+    {
+        d = value % 10;
+        value = value / 10;
+        strValue[i] = d + 48;
+    }
+    strValue[len] = '\0';
+    if (dot > 0)
+    {
+        for (int i = len; i >= dot; i--)
+        {
+            strValue[i + 1] = strValue[i];
+        }
+        strValue[dot] = separator;
+    }
+
+    if (remove_leading_zeros) { 
+        if (strValue[0] == '0')
+        {
+            strValue[0] = ' ';
+            if (strValue[1] == '0')
+                strValue[1] = ' ';
+        }
+    }
 }
 
 /**

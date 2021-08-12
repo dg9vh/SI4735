@@ -173,6 +173,8 @@
 #define SSB_SOFT_MUTE_SNR_THRESHOLD 0x3303   // Sets SNR threshould to engage soft mute. Defaul 8dB
 #define SSB_RF_AGC_ATTACK_RATE 0x3700        // Sets the number of milliseconds the high RF peak detector must be exceeded before decreasing the gain. Defaul 4.
 #define SSB_RF_AGC_RELEASE_RATE 0x3701       // Sets the number of milliseconds the low RF peak detector must be exceeded before increasing the gain. Defaul 24.
+#define SSB_IF_AGC_RELEASE_RATE 0x3703       // Sets the number of milliseconds the low IF peak detector must not be exceeded before increasing the gain. Default value is 140 (approximately 40 dB / s).
+#define SSB_IF_AGC_ATTACK_RATE 0x3702        // Sets the number of milliseconds the high IF peak detector must be exceeded before decreasing gain. Default value is 4 (approximately 1400 dB / s).
 
 // SSB
 #define SSB_RF_IF_AGC_ATTACK_RATE 0x3702  // Sets the number of milliseconds the high IF peak detector must be exceeded before decreasing gain. Defaul 4.
@@ -203,7 +205,7 @@
 #define MIN_DELAY_WAIT_SEND_LOOP 300     // In uS (Microsecond) - each loop of waitToSend sould wait this value in microsecond
 #define MAX_SEEK_TIME 8000               // defines the maximum seeking time 8s is default.
 
-#define DEFAULT_CURRENT_AVC_AM_MAX_GAIN 32 
+#define DEFAULT_CURRENT_AVC_AM_MAX_GAIN 36 
 
 #define XOSCEN_CRYSTAL 1 // Use crystal oscillator
 #define XOSCEN_RCLK 0    // Use external RCLK (crystal oscillator disabled).
@@ -230,7 +232,7 @@
  * 
  * @see Si47XX PROGRAMMING GUIDE; AN332 (REV 1.0); pages 64 and 65
  */
-typedef union
+    typedef union
 {
     struct
     {
@@ -869,7 +871,8 @@ typedef union
         uint8_t minute2 : 4;      // UTC Minutes - 4 bits  more significant  (void “Crosses boundary”)
         uint8_t hour1 : 4;        // UTC Hours - 4 bits less significant (void “Crosses boundary”)
         uint8_t hour2 : 1;        // UTC Hours - 4 bits more significant (void “Crosses boundary”)
-        uint32_t mjd : 17;        // Modified Julian Day Code
+        uint16_t mjd1 : 15;        // Modified Julian Day Code - 15  bits less significant (void “Crosses boundary”)
+        uint16_t mjd2 : 2;         // Modified Julian Day Code - 2 bits more significant (void “Crosses boundary”)
     } refined;
     uint8_t raw[6];
 } si47x_rds_date_time;
@@ -1053,7 +1056,7 @@ protected:
     char rds_buffer2A[65]; //!<  RDS Radio Text buffer - Program Information
     char rds_buffer2B[33]; //!<  RDS Radio Text buffer - Station Informaation
     char rds_buffer0A[9];  //!<  RDS Basic tuning and switching information (Type 0 groups)
-    char rds_time[20];     //!<  RDS date time received information
+    char rds_time[25];     //!<  RDS date time received information
 
     int rdsTextAdress2A; //!<  rds_buffer2A current position
     int rdsTextAdress2B; //!<  rds_buffer2B current position
@@ -1122,9 +1125,7 @@ protected:
     void clearRdsBuffer2A();
     void clearRdsBuffer2B();
     void clearRdsBuffer0A();
-
     void getSsbAgcStatus();
-    void setSsbAgcOverrite(uint8_t SSBAGCDIS, uint8_t SSBAGCNDX);
 
 public:
     SI4735();
@@ -1410,6 +1411,30 @@ public:
     };
 
     /**
+     * @ingroup group17
+     * @brief Sets the number of milliseconds the low IF peak detector
+     * 
+     * @details Sets the number of milliseconds the low IF peak detector must not be exceeded before increasing the gain. Default value is 140 (approximately 40 dB / s).
+     * @param param number of milliseconds ( from 4 to 248; step 4); default value 0x008C (140).
+     */
+    inline void setSsbIfAgcReleaseRate(uint8_t param = 140)
+    {
+        sendProperty(SSB_IF_AGC_RELEASE_RATE, param);
+    };
+
+    /**
+     * @ingroup group17
+     * @brief Sets the IF AGC attack rate
+     * 
+     * @details Large values provide slower attack, and smaller values provide faster attack
+     * @param param number of milliseconds ( from 4 to 248; step 4); default value 4.
+     */
+    inline void setSsbIfAgcAttackRate(uint8_t param = 4)
+    {
+        sendProperty(SSB_IF_AGC_ATTACK_RATE, param);
+    };
+
+    /**
      * @ingroup group08
      * @brief Checks if the AGC is enabled
      *
@@ -1432,6 +1457,7 @@ public:
     };
 
     void setAutomaticGainControl(uint8_t AGCDIS, uint8_t AGCIDX);
+    void setSsbAgcOverrite(uint8_t SSBAGCDIS, uint8_t SSBAGCNDX, uint8_t reserved = 0);
 
     void getCurrentReceivedSignalQuality(uint8_t INTACK);
     void getCurrentReceivedSignalQuality(void);
@@ -2445,7 +2471,10 @@ public:
     char *getRdsText2A(void); // Gets the Radio Text
     char *getRdsText2B(void);
 
+    void mjdConverter(uint32_t mjd, uint32_t *year, uint32_t *month, uint32_t *day);
     char *getRdsTime(void);
+    char *getRdsDateTime(void);
+    bool getRdsDateTime(uint16_t *year, uint16_t *month, uint16_t *day, uint16_t *hour, uint16_t * minute);
 
     void getNext2Block(char *);
     void getNext4Block(char *);
@@ -2556,7 +2585,6 @@ public:
      * @ingroup group08 Si47XX device Status 
      * 
      * @brief Gets the current status  of the Si47XX (AM, FM or SSB)
-     * 
      * @see Si47XX PROGRAMMING GUIDE; AN332 (REV 1.0); pages 73 (FM) and 139 (AM)
      */
     inline void getStatus()
@@ -2644,5 +2672,7 @@ public:
         digitalWrite(audioMuteMcuPin, on);
         delayMicroseconds(300);
     }
+
+    void convertToChar(uint16_t value, char *strValue, uint8_t len, uint8_t dot, uint8_t separator, bool remove_leading_zeros = true );
 };
 #endif // _SI4735_H
