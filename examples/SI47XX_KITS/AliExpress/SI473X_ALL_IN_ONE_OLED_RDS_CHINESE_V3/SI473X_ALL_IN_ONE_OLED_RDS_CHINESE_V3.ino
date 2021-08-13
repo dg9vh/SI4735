@@ -582,16 +582,18 @@ void showStatus()
   showSValue();
   showSMeter();
   showVolume();
-  showClock();
+  showSNR();
   showStereo();
 }
 
 void showSNR() {
-  oled.setCursor(0, 2);
-  oled.print("    ");
-  oled.setCursor(0, 2);
-  oled.print(si4735.getCurrentSNR());
-  oled.print("dB");
+  if (currentMode == AM || currentMode == LSB || currentMode == USB) {
+    oled.setCursor(0, 2);
+    oled.print("    ");
+    oled.setCursor(0, 2);
+    oled.print(si4735.getCurrentSNR());
+    oled.print("dB");
+  }
 }
 
 void showClock() {
