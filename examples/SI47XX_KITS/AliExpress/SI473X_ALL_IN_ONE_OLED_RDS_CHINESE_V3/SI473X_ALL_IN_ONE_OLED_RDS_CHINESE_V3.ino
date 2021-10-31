@@ -302,8 +302,9 @@ void setup()
   // Splash - Change it for your introduction text.
   oled.setCursor(40, 0);
   oled.print("SI473X");
-  oled.setCursor(20, 1);
-  oled.print("Arduino Library");
+  oled.setCursor(18, 1);
+  //oled.print("Arduino Library");
+  oled.print("Version 20210813");
   delay(500);
   oled.setCursor(10, 2);
   oled.print("V3.0.4 - By PU2CLR");
