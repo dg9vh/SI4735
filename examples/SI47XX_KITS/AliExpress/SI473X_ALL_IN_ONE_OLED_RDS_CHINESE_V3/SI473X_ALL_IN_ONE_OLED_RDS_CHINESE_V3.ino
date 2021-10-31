@@ -304,7 +304,7 @@ void setup()
   oled.print("SI473X");
   oled.setCursor(18, 1);
   //oled.print("Arduino Library");
-  oled.print("Version 20210813");
+  oled.print("Version 20211031");
   delay(500);
   oled.setCursor(10, 2);
   oled.print("V3.0.4 - By PU2CLR");
