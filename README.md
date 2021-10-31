@@ -10,6 +10,7 @@
 |----------|------------|
 |  ![SI4735 Prototypes](extras/images/multiplatform_SI47XX_photo_05.png)  | This document is aimed at the Arduino developers, radio experimenters, hobbyists and anyone interested in building a receiver based on the Si473X IC family from Silicon Labs.  This project is about an Arduino library for the SI473X BROADCAST AM, SSB and FM/RDS RADIO RECEIVERS. Actually, AM and SSB modes from 150kHz to 30MHz; and FM mode from 64 to 108 MHz.
 
+
 <BR>
 
 This library is intended to provide an easier interface for controlling the SI47XX (including the boards ["PL102BA-S V:2.1 10628"](https://pu2clr.github.io/SI4735/extras/BOARD_PL102BA/) and ["NE928-10A V:01"](https://pu2clr.github.io/SI4735/extras/BOARD_NE928_10A_V_01/) based on SI4730) by using Arduino platform. [It also has support to the SSB mode on SI4735-D60 and SI4732-A10 devices](https://pu2clr.github.io/SI4735/#si4735-patch-support-for-single-side-band). __The communication protocol used by this library is the I²C__. 
@@ -459,86 +460,12 @@ This library implements some RDS features of the SI4735. All function to deal wi
 {% include videoRDS1.html %} 
 
 
-See RDS example implementations [here](https://github.com/pu2clr/SI4735/tree/master/examples/SI47XX_10_RDS).
-
-<BR>
-
-__The table below shows the features that this library implements__.
-
-<BR>
-
-#### RDS Features implemented
-
-| Feature | Infoirmation type | Description |  
-| ---------- | --------------- | ---------- |
-| PTY | Program Type | PTY is a 5-bit that indicates the program type (see table below) |
-| PS | Program Service Name | Station name. It has eight static caharacter with the name of the station |
-| RT | Radiotext (under construction...) | String with up to 64 characters with additional information about the content currently being transmitted  |
-| CT | Clock Time (under construction...) | It provides the the current clock |
-
-
-<BR>
-
-#### The table below shows the main group types implemented by this library
-
-| Group Type | Description |
-| ---------- | ----------- |
-| 0A | Basic information [ˆ3] |
-| 0B |  Basic information [ˆ3] |
-| 1A  | Additional information |
-| 3A | Setup open data application |
-| 4A | Date and time (UTC) and Offset to convert UTC to local time |
-| 10A | Program Type Name |
-| 15B | Basic information |
-
-* [ˆ3] The basic information includes the Program Service Name and it has 8 characters. It should identifie just the name of the station. However, some stations might use this resource to show other kind of messages, contradicting what is established by the RDS protocol.
-
-<BR>
-
-#### RDS Program type description
-
-
-| RDS/RBDS Code | European Program Type | North American Program Type |
-| -------- | ---------- | ------ |
-| 0 | No program definition type |	No program definition type |
-| 1 | News	News |
-| 2	 | Current affairs | Information |
-| 3	| Information |	Sport |
-| 4	| Sport | Talk |
-| 5	| Education | Rock |
-| 6	| Drama	| Classic Rock |
-| 7	| Culture |	Adult Hits |
-| 8	| Science |	Soft Rock |
-| 9	| Variable | Top 40 |
-| 10 | Popular Music (Pop) | Country Music |
-| 11 | Rock Music | Oldies Music |
-| 12 | Easy Listening |	Soft Music |
-| 13 | Light Classical | Nostalgia |
-| 14 | Serious Classical | Jazz |
-| 15 | Other Music | Classical |
-| 16 | Weather | Rhythm & Blues Music |
-| 17 | Finance | Soft Rhythm & Blues Music |
-| 18 | Children’s Programs | Language |
-| 19 | Social Affairs | Religious Music |
-| 20 | Religion | Religious Talk |
-| 21 | Phone-in Talk | Personality
-| 22 | Travel |	Public |
-| 23 | Leisure	| College |
-| 24 | Jazz Music | Not assigned |
-| 25 | Country Music | Not assigned |
-| 26 | National Music |	Not assigned |
-| 27 | Oldies Music	Not assigned |
-| 28 | Folk Music |	Not assigned |
-| 29 | Documentary | Weather |
-| 30 | Alarm Test | Emergency Test |
-| 31 | Alarm | Emergency |
-
-[Go to contents](https://pu2clr.github.io/SI4735/#contents)
+See [RDS example implementations for more details](https://github.com/pu2clr/SI4735/tree/master/examples/SI47XX_10_RDS).
 
 
 ### SI4735 Patch Support for Single Side Band
 
-The SI4735 class implements a set of methods to apply patches and deal with SSB mode. All documentation about pathces can be seen [here](https://pu2clr.github.io/SI4735/extras/apidoc/html/group__group17.html).
+The SI4735 class implements a set of methods to apply patches and deal with SSB mode. All API documentation about pathces can be seen [here](https://pu2clr.github.io/SI4735/extras/apidoc/html/group__group17.html).
 
 The SSB patches used in some examples of this library were tested only on SI4735-D60 and SI4732-A10 devices.  __The updates used in that examples are unlikely to work on other SI47XX devices__.
 
@@ -591,7 +518,7 @@ See SSB example implementations [here](https://github.com/pu2clr/SI4735/tree/mas
 
 ### EEPROM support
 
-Depending on your MCU memory size, to use SSB mode may not be possible due to the large amount of memory required by the patch. To solve this problem this library implemented the function ```cpp downloadPatchFromEeprom```. This function reads the patch content from an external EEPROM and transfer it to the SI4732-A10 or SI4735-D60 devices. To run this function you must have a external I2C EEPROM device well configured with your MCU and the Si4732/35 device on I2C bus. Also, the EEPROM must have the patch content generated by the sketch  SI47XX_09_SAVE_SSB_PATCH_EEPROM. [See folder TOOLS](https://github.com/pu2clr/SI4735/tree/master/examples/TOOLS/SI47XX_09_SAVE_SSB_PATCH_EEPROM).
+Depending on your MCU memory size, to use SSB mode may not be possible due to the large amount of memory required by the patch. To solve this problem this library implemented the function __downloadPatchFromEeprom__. This function reads the patch content from an external EEPROM and transfer it to the SI4732-A10 or SI4735-D60 devices. To run this function you must have a external I2C EEPROM device well configured with your MCU and the Si4732/35 device on I2C bus. Also, the EEPROM must have the patch content generated by the sketch  SI47XX_09_SAVE_SSB_PATCH_EEPROM stored in it. [See folder TOOLS](https://github.com/pu2clr/SI4735/tree/master/examples/TOOLS/SI47XX_09_SAVE_SSB_PATCH_EEPROM).
 
 The example [SI4735_06_SSB_EEPROM](https://github.com/pu2clr/SI4735/tree/master/examples/SI47XX_01_SERIAL_MONITOR/SI4735_06_SSB_EEPROM) shows this functionality on an Arduino Pro Mini. 
 
@@ -711,7 +638,7 @@ void loop() {
 If you use that approach, all you have to do is download the current version of PU2CLR SI4735 Arduino Library. Instead of using PU2CLR SI4735 Arduino Library class directly, you can use your own class that extends the original class.  This way, you always have the current version of the library customized for your needs. So, no extra work will be needed when you update the PU2CLR SI4735 Arduino Library. In other words, your custom code will be always synchronized with the PU2CLR SI4735 Arduino Library code.
 
 
-__Please, check the [API documentation](https://pu2clr.github.io/SI4735/extras/apidoc/html/) before implementing something you think is new. It is possible that what you want has already been implemented__). 
+__Please, check the [API documentation](https://pu2clr.github.io/SI4735/extras/apidoc/html/) before implementing something you think is new. It is possible that what you want has already been implemented__. 
 
 See also:
 * [How to use C++ Classes in Arduino IDE without creating a Library](https://www.radishlogic.com/arduino/use-c-class-arduino-ide-without-creating-library/?fbclid=IwAR07yO6OvyUlAa4d28N7VTWtY2vHjlUbtkxKiO7LJKOUkPou1bh8Lvwg8rA)
@@ -863,14 +790,15 @@ It has been observed in several tests. Some tips:
 
 1. Avoid using the computer connected to the mains during testing. The electrical grid can disturb the communication between the Arduino based board and the SI47XX device;
 2. The RESET pin is not configured properly. Check the connection of the SI47XX pin 15 (RST) and the Arduino based board;
-3. If the SI47XX pin 16 (SEN) is grounded, the I2C bus address must be 0x11, otherwise it must be 0x63 (the default I2C bus address is 0x11). Preferably, keep this pin grounded;
-4. Check if the pins 17 (SCLK / SCL) and 18 (SDIO / SDA) of the SI47XX device are correctly connected to the Arduino board pins;
-5. Check the pull-up resistors connected to the pins 17 (SCLK / SCL) and 18 (SDIO / SDA) of the SI47XX device;
-6. Check the voltage on SI47XX pin 15 (RST).  It should be 3.3V. All digital pins of your Arduino must have 3.3v when in HIGH condition. If it is greater than 3.3V, probably you are using an 5V board; 
-7. If you are using the board Arduino Pro Mini 3.3V (8MHz), be sure you selected the correct board on Arduino IDE Tools menu, Processor: __"Atmega328P (3.3V, 8MHz)"__. By default, the Arduino IDE uses the 5V processor version; 
-8. Do not try to power an ATmega328 Arduino Board designed to work with 5V and 16MHz with a 3.3V supply. That configuration will make your system unstable. See [ATmega328P Datasheet](http://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-7810-Automotive-Microcontrollers-ATmega328P_Datasheet.pdf);  
-9. Do not try to power your Arduino based board designed to work with 3.3V with greater voltage. See the technical specifications of your Arduino Board and remember that the maximum voltage of the SI47XX MCU CONTROL INTERFACE is 3.6V;
-10. Check the external crystal and its capacitors connections. 
+3. Try to use a 22K pull-up on Arduino Board pin used for reseting (RESET PIN). It may be needed if you are using some Arduino based boards like (Atmega32, Atmega128 etc)
+4. If the SI47XX pin 16 (SEN) is grounded, the I2C bus address must be 0x11, otherwise it must be 0x63 (the default I2C bus address is 0x11). Preferably, keep this pin grounded;
+5. Check if the pins 17 (SCLK / SCL) and 18 (SDIO / SDA) of the SI47XX device are correctly connected to the Arduino board pins;
+6. Check the pull-up resistors connected to the pins 17 (SCLK / SCL) and 18 (SDIO / SDA) of the SI47XX device;
+7. Check the voltage on SI47XX pin 15 (RST).  It should be 3.3V. All digital pins of your Arduino must have 3.3v when in HIGH condition. If it is greater than 3.3V, probably you are using an 5V board; 
+8. If you are using the board Arduino Pro Mini 3.3V (8MHz), be sure you selected the correct board on Arduino IDE Tools menu, Processor: __"Atmega328P (3.3V, 8MHz)"__. By default, the Arduino IDE uses the 5V processor version; 
+9. Do not try to power an ATmega328 Arduino Board designed to work with 5V and 16MHz with a 3.3V supply. That configuration will make your system unstable. See [ATmega328P Datasheet](http://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-7810-Automotive-Microcontrollers-ATmega328P_Datasheet.pdf);  
+10. Do not try to power your Arduino based board designed to work with 3.3V with greater voltage. See the technical specifications of your Arduino Board and remember that the maximum voltage of the SI47XX MCU CONTROL INTERFACE is 3.6V;
+11. Check the external crystal and its capacitors connections. 
 
 __Attention__: The pins numbers above is considering Si473x-D60(SSOP) package.
 
@@ -1028,17 +956,20 @@ The table below shows the some boards where this library has been successfully t
 |  9 | Arduino NANO ATmega 168 | Yes | A4 and A5 | 12 | [More...](https://www.arduino.cc/en/uploads/Main/ArduinoNanoManual23.pdf) |
 | 10 | Arduino NANO 33 IoT | Yes | A4 and A5 | 12 | [More...](https://www.arduino.cc/en/Guide/NANO33BLE) |
 | 11 | Arduino Yún / ATmega-32u4 | Yes | 2 and 3 | 12 | [More...](https://store.arduino.cc/usa/arduino-yun)|
-| 12 | ATtiny85 | No | 5 and 7 | 2 (D3) | [More...](https://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-2586-AVR-8-bit-Microcontroller-ATtiny25-ATtiny45-ATtiny85_Datasheet.pdf)|
-| 13 | Arduino DUE | No | 2 and 3 |   12 | [More...](https://store.arduino.cc/usa/due) |
-| 14 | BlueDuino 3.3V (ATmega-32u4) | No | 2 and 3 | 10 | [More...](https://wiki.aprbrother.com/en/BlueDuino_rev2.html) |
-| 15 | Arduino Mini Pro 5V 16Mhz | Yes | 2 and 3 |  10 | [More...](https://store.arduino.cc/usa/arduino-pro-mini) |
-| 16 | STM32F746G-DISCO | No | - | - | [More...](https://www.st.com/en/evaluation-tools/32f746gdiscovery.html?fbclid=IwAR2D9OwhInHQ8WYxeflJQ7QV2aNscFbfcbeblaFcYq0angJIjCKmkQBPTBc) |
-| 17 | STM32F103 Series  |  No | PB6 (SCL) and PB7(SDA) | PA12 | [More...](https://circuitdigest.com/microcontroller-projects/getting-started-with-stm32-development-board-stm32f103c8-using-arduino-ide) |
-| 18 | STM32F411 Series  |  No | PB6 (SCL) and PB7(SDA) | PA12 | [More...](https://hackaday.com/2021/01/20/blue-pill-vs-black-pill-transitioning-from-stm32f103-to-stm32f411/) |
-| 19 | Raspberry Pi Pico  | No | GP0 (0) and GP1 (1) | GP16 (16) | [More...](https://www.tomshardware.com/how-to/program-raspberry-pi-pico-with-arduino-ide) | 
-| 20 | Seeeduino XIAO | No  | A4 and A5  |  3 |  [More...](https://wiki.seeedstudio.com/Seeeduino-XIAO/)  | 
-| 21 | Teensy 3.1     | No  | A4 and A5  | 12  |  [More...](https://www.pjrc.com/teensy/teensy31.html) | 
-| 22 | Teensy 4.1     | No  | A4 and A5  | 12  |  [More...](https://www.pjrc.com/store/teensy41.html) | 
+| 12 | ATtiny84 | No | 7 and 8 | 6 | [More...](http://ww1.microchip.com/downloads/en/devicedoc/Atmel-7701_Automotive-Microcontrollers-ATtiny24-44-84_Datasheet.pdf)|
+| 13 | ATtiny85 | No | 5 and 7 | 2 (D3) | [More...](https://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-2586-AVR-8-bit-Microcontroller-ATtiny25-ATtiny45-ATtiny85_Datasheet.pdf)|
+| 14 | Arduino DUE | No | 2 and 3 |   12 | [More...](https://store.arduino.cc/usa/due) |
+| 15 | BlueDuino 3.3V (ATmega-32u4) | No | 2 and 3 | 10 | [More...](https://wiki.aprbrother.com/en/BlueDuino_rev2.html) |
+| 16 | Arduino Mini Pro 5V 16Mhz | Yes | 2 and 3 |  10 | [More...](https://store.arduino.cc/usa/arduino-pro-mini) |
+| 17 | STM32F746G-DISCO | No | - | - | [More...](https://www.st.com/en/evaluation-tools/32f746gdiscovery.html?fbclid=IwAR2D9OwhInHQ8WYxeflJQ7QV2aNscFbfcbeblaFcYq0angJIjCKmkQBPTBc) |
+| 18 | STM32F103 Series  |  No | PB6 (SCL) and PB7(SDA) | PA12 | [More...](https://circuitdigest.com/microcontroller-projects/getting-started-with-stm32-development-board-stm32f103c8-using-arduino-ide) |
+| 19 | STM32F411 Series  |  No | PB6 (SCL) and PB7(SDA) | PA12 | [More...](https://hackaday.com/2021/01/20/blue-pill-vs-black-pill-transitioning-from-stm32f103-to-stm32f411/) |
+| 20 | Raspberry Pi Pico  | No | GP0 (0) and GP1 (1) | GP16 (16) | [More...](https://www.tomshardware.com/how-to/program-raspberry-pi-pico-with-arduino-ide) | 
+| 21 | Seeeduino XIAO | No  | A4 and A5  |  3 |  [More...](https://wiki.seeedstudio.com/Seeeduino-XIAO/)  | 
+| 22 | Teensy 3.1     | No  | A4 and A5  | 12  |  [More...](https://www.pjrc.com/teensy/teensy31.html) | 
+| 23 | Teensy 4.1     | No  | A4 and A5  | 12  |  [More...](https://www.pjrc.com/store/teensy41.html) | 
+| 24 | Atmega32       | No  | PC1 and PC0 | PB6/12 | [More...](https://github.com/MCUdude/MightyCore) |
+| 24 | Atmega128      | No  | PC1 and PC0 | PB6/12 | [More...](https://ww1.microchip.com/downloads/en/DeviceDoc/doc2467.pdf) |
 
 
 * [ˆ4] It seams that in some ESP32 board, the I²C bus is not configured prorpelly by default. However, you can set almost any pin on ESP32 to setup I²C capabilities. All you have to do is call __Wire.begin(SDA, SCL);__ where SDA and SCL are the ESP32 GPIO pins. See see the folder examples to check how to use ESP32 devices. 

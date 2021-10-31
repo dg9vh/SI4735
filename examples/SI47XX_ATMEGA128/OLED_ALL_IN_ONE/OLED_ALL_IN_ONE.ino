@@ -1,5 +1,8 @@
 /*
-  This sketch runs on STM32F1 devices.   
+
+  UNDER CONSTRUCTION...
+
+  This sketch runs on Atmega128 devices.   
 
   It is  a  complete  radio  capable  to  tune  LW,  MW,  SW  on  AM  and  SSB  mode  and  also  receive  the
   regular  comercial  stations.
@@ -7,25 +10,25 @@
   Features:   AM; SSB; LW/MW/SW; external mute circuit control; AGC; Attenuation gain control;
               SSB filter; CW; AM filter; 1, 5, 10, 50 and 500kHz step on AM and 10Hhz sep on SSB
 
-  STM32F1 and components wire up. 
+  Atmega128 and components wire up. 
   
-  | Device name   | Device Pin / Description |  STM32F1|
-  | --------------| -------------------------| --------|
-  |    OLED       |                          |         |
-  |               | SDA/SDIO                 |  B7     | 
-  |               | SCL/SCLK                 |  B6     | 
-  |    Encoder    |                          |         |
-  |               | A                        |  PA9    |
-  |               | B                        |  PA10   |
-  |               | PUSH BUTTON (encoder)    |  PA11   |
+  | Device name   | Device Pin / Description | ATmega128 |
+  | --------------| -------------------------| ----------|
+  |    OLED       |                          |           |
+  |               | SDA/SDIO                 |  PD1      | 
+  |               | SCL/SCLK                 |  PD0      | 
+  |    Encoder    |                          |           |
+  |               | A                        |  PE4      |
+  |               | B                        |  PE5      |
+  |               | PUSH BUTTON (encoder)    |  PB0      |
 
-  STM32F1 3.1 and SI4735-D60 or SI4732-A10 wire up
+  ATmega128 and SI4735-D60 or SI4732-A10 wire up
 
-  | Si4735  | SI4732   | DESC.  | ESP32    | 
+  | Si4735  | SI4732   | DESC.  | Seeduino | 
   |---------| -------- |--------|----------|
-  | pin 15  |  pin 9   | RESET  |   PA12   |  
-  | pin 18  |  pin 12  | SDIO   |   B7     |
-  | pin 17  |  pin 11  | SCLK   |   B6     |
+  | pin 15  |  pin 9   | RESET  |   PB2/12 |  
+  | pin 18  |  pin 12  | SDIO   |   PD1    |
+  | pin 17  |  pin 11  | SCLK   |   PD0    |
 
   (*1) If you are using the SI4732-A10, check the corresponding pin numbers.
   (*1) The PU2CLR SI4735 Arduino Library has resources to detect the I2C bus address automatically.
@@ -53,15 +56,17 @@ const uint16_t size_content = sizeof ssb_patch_content; // see patch_init.h
 #define SW_BAND_TYPE 2
 #define LW_BAND_TYPE 3
 
+
+
 // Enconder PINs
-#define ENCODER_PIN_A PA9             
-#define ENCODER_PIN_B PA10           
+#define ENCODER_PIN_A PE4           
+#define ENCODER_PIN_B PE5           
 
 
 // Buttons controllers
-#define ENCODER_PUSH_BUTTON PA11
+#define ENCODER_PUSH_BUTTON PC0  
 
-#define RESET_PIN PA12               
+#define RESET_PIN PB2              // 12
 
 #define MIN_ELAPSED_TIME 300
 #define MIN_ELAPSED_RSSI_TIME 200
@@ -114,15 +119,17 @@ long elapsedRSSI = millis();
 long elapsedButton = millis();
 
 long elapsedClick = millis();
+long elapsedCommand = millis();
 volatile int encoderCount = 0;
 uint16_t currentFrequency;
 
 const uint8_t currentBFOStep = 10;
 
-const char * menu[] = {"Seek", "Step", "Mode", "BW", "AGC/Att", "Volume", "SoftMute", "BFO"};
+const char *menu[] = {"Volume", "Step", "Mode", "BFO", "BW", "AGC/Att", "SoftMute", "Seek Up", "Seek Down"};
 int8_t menuIdx = 0;
-const int lastMenu = 7;
+const int lastMenu = 8;
 int8_t currentMenuCmd = -1;
+
 
 typedef struct
 {
@@ -200,10 +207,15 @@ typedef struct
   int8_t bandwidthIdx;    // Index of the table bandwidthFM, bandwidthAM or bandwidthSSB;
 } Band;
 
-/**
- *  Band table. You can customize this table for your own band plan
- *  If you change this table you have start the system pressing the encoder push button to reset the eeprom
- */
+/*
+   Band table
+   YOU CAN CONFIGURE YOUR OWN BAND PLAN. Be guided by the comments.
+   To add a new band, all you have to do is insert a new line in the table below. No extra code will be needed.
+   You can remove a band by deleting a line if you do not want a given band. 
+   Also, you can change the parameters of the band.
+   ATTENTION: You have to RESET the eeprom after adding or removing a line of this table. 
+              Turn your receiver on with the encoder push button pressed at first time to RESET the eeprom content.  
+*/
 Band band[] = {
     {"VHF", FM_BAND_TYPE, 6400, 10800, 10390, 1, 0},
     {"MW1", MW_BAND_TYPE, 150, 1720, 810, 3, 4},
@@ -251,7 +263,8 @@ void setup()
   pinMode(ENCODER_PIN_A, INPUT_PULLUP);
   pinMode(ENCODER_PIN_B, INPUT_PULLUP);
 
-  // Starts Splash 
+  // The line below may be necessary to setup I2C pins on ESP32
+
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C); // Address 0x3C for 128x32
 
   display.display();
@@ -260,19 +273,18 @@ void setup()
   // Splash - Remove or change it for your introduction text.
   display.clearDisplay();
   print(0, 0, NULL, 2, "PU2CLR");
-  print(0, 15, NULL, 2, "STM32F1");
+  print(0, 15, NULL, 2, "Atmega128");
   display.display();
   delay(2000);
   display.clearDisplay();
   print(0, 0, NULL, 2, "SI473X");
   print(0, 15, NULL, 2, "Arduino");
   display.display();
-  // Ends Splash
+  // End Splash
 
   delay(2000);
   display.clearDisplay();
 
-  EEPROM.begin();
 
   // If you want to reset the eeprom, keep the VOLUME_UP button pressed during statup
   if (digitalRead(ENCODER_PUSH_BUTTON) == LOW)
@@ -283,21 +295,20 @@ void setup()
     display.clearDisplay();
   }
 
-  // ICACHE_RAM_ATTR void rotaryEncoder(); see rotaryEncoder implementation below.
   attachInterrupt(digitalPinToInterrupt(ENCODER_PIN_A), rotaryEncoder, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ENCODER_PIN_B), rotaryEncoder, CHANGE);
 
   rx.setI2CFastModeCustom(100000);
   
   rx.getDeviceI2CAddress(RESET_PIN); // Looks for the I2C bus address and set it.  Returns 0 if error
-  
+
   rx.setup(RESET_PIN, MW_BAND_TYPE);
   // Comment the line above and uncomment the three lines below if you are using external ref clock (active crystal or signal generator)
   // rx.setRefClock(32768);
   // rx.setRefClockPrescaler(1);   // will work with 32768  
   // rx.setup(RESET_PIN, 0, MW_BAND_TYPE, SI473X_ANALOG_AUDIO, XOSCEN_RCLK);
 
-  
+
   delay(300);
 
   // Checking the EEPROM content
@@ -306,6 +317,7 @@ void setup()
     readAllReceiverInformation();
   } else 
     rx.setVolume(volume);
+
   
   useBand();
   showStatus();
@@ -329,11 +341,14 @@ void printParam(const char *msg) {
 }
 
 /*
+   The Seeduino uses a Flash EEPROM emulator library. See FlashStorage_SAMD Arduino Library on: https://github.com/khoih-prog/FlashStorage_SAMD  
+   
    writes the conrrent receiver information into the eeprom.
    The EEPROM.update avoid write the same data in the same memory position. It will save unnecessary recording.
 */
 void saveAllReceiverInformation()
 {
+
   int addr_offset;
 
   EEPROM.update(eeprom_address, app_id);                 // stores the app id;
@@ -354,6 +369,7 @@ void saveAllReceiverInformation()
     EEPROM.update(addr_offset++, band[i].currentStepIdx);       // Stores current step of the band
     EEPROM.update(addr_offset++, band[i].bandwidthIdx);         // table index (direct position) of bandwidth
   }
+
 }
 
 /**
@@ -361,6 +377,7 @@ void saveAllReceiverInformation()
  */
 void readAllReceiverInformation()
 {
+
   uint8_t volume;
   int addr_offset;
   int bwIdx;
@@ -427,7 +444,7 @@ void readAllReceiverInformation()
  */
 void resetEepromDelay()
 {
-  storeTime = millis();
+  elapsedCommand = storeTime = millis();
   itIsTimeToSave = true;
 }
 
@@ -453,8 +470,7 @@ void disableCommands()
 /**
  * Reads encoder via interrupt
  * Use Rotary.h and  Rotary.cpp implementation to process encoder via interrupt
- * if you do not add ICACHE_RAM_ATTR declaration, the system will reboot during attachInterrupt call. 
- * With ICACHE_RAM_ATTR macro you put the function on the RAM.
+
  */
 void  rotaryEncoder()
 { // rotary encoder events
@@ -607,11 +623,7 @@ void showAgcAtt()
 void showStep()
 {
     char sStep[15];
-    if ( currentMode == FM ) { 
-      sprintf(sStep, "Stp:%4d", tabFmStep[currentStepIdx] * 10); 
-    } else {
-      sprintf(sStep, "Stp:%4d", tabAmStep[currentStepIdx]); 
-    }
+    sprintf(sStep, "Stp:%4d", (currentMode == FM )? ( tabFmStep[currentStepIdx] * 10) : tabAmStep[currentStepIdx]);
     printParam(sStep);
 }
 
@@ -628,6 +640,7 @@ void showBFO()
     sprintf(bfo, "BFO: %4.4d", currentBFO);
 
   printParam(bfo);
+  elapsedCommand = millis();
 }
 
 /*
@@ -663,6 +676,7 @@ void setBand(int8_t up_down)
     bandIdx = (bandIdx > 0) ? (bandIdx - 1) : lastBand;
   useBand();
   delay(MIN_ELAPSED_TIME); // waits a little more for releasing the button.
+  elapsedCommand = millis();
 }
 
 /**
@@ -717,10 +731,10 @@ void useBand()
 
 
 void loadSSB() {
-   rx.setI2CFastModeCustom(400000); 
-   rx.loadPatch(ssb_patch_content, size_content, bandwidthSSB[bwIdxSSB].idx);
-   rx.setI2CFastModeCustom(100000);  
-   ssbLoaded =  true; 
+  rx.setI2CFastModeCustom(400000); // You can try rx.setI2CFastModeCustom(700000); or greater value
+  rx.loadPatch(ssb_patch_content, size_content, bandwidthSSB[bwIdxSSB].idx);
+  rx.setI2CFastModeCustom(100000);
+  ssbLoaded = true; 
 }
 
 /**
@@ -811,6 +825,7 @@ void doAgc(int8_t v) {
   rx.setAutomaticGainControl(disableAgc, agcNdx); // if agcNdx = 0, no attenuation
   showAgcAtt();
   delay(MIN_ELAPSED_TIME); // waits a little more for releasing the button.
+  elapsedCommand = millis();
 }
 
 
@@ -842,6 +857,7 @@ void doStep(int8_t v)
     }
     band[bandIdx].currentStepIdx = currentStepIdx;
     showStep();
+    elapsedCommand = millis();
 }
 
 /**
@@ -888,6 +904,7 @@ void doMode(int8_t v)
     useBand();
   }
   delay(MIN_ELAPSED_TIME); // waits a little more for releasing the button.
+  elapsedCommand = millis();
 }
 
 /**
@@ -937,22 +954,22 @@ void doSoftMute(int8_t v)
 
   rx.setAmSoftMuteMaxAttenuation(softMuteMaxAttIdx);
   showSoftMute();
+  elapsedCommand = millis();
 }
 
 /**
  *  Menu options selection
  */
 void doMenu( int8_t v) {
-  int8_t lastOpt;
   menuIdx = (v == 1) ? menuIdx + 1 : menuIdx - 1;
-  lastOpt = ((currentMode == LSB || currentMode == USB)) ? lastMenu : lastMenu - 1;
-  if (menuIdx > lastOpt)
+  if (menuIdx > lastMenu)
     menuIdx = 0;
   else if (menuIdx < 0)
-    menuIdx = lastOpt;
+    menuIdx = lastMenu;
 
   showMenu();
   delay(MIN_ELAPSED_TIME); // waits a little more for releasing the button.
+  elapsedCommand = millis();
 }
 
 
@@ -962,44 +979,58 @@ void doMenu( int8_t v) {
 void doCurrentMenuCmd() {
   disableCommands();
   switch (currentMenuCmd) {
+     case 0:                 // VOLUME
+      cmdVolume = true;
+      showVolume();
+      break;
     case 1:                 // STEP
       cmdStep = true;
       showStep();
       break;
     case 2:                 // MODE
       cmdMode = true;
-      // lcd.clear();
       showMode();
       break;
-    case 3:                 // BW
+    case 3:
+        bfoOn = true;
+        if ((currentMode == LSB || currentMode == USB)) {
+          showBFO();
+        }
+      // showFrequency();
+      break;      
+    case 4:                 // BW
       cmdBandwidth = true;
       showBandwidth();
       break;
-    case 4:                 // AGC/ATT
+    case 5:                 // AGC/ATT
       cmdAgc = true;
       showAgcAtt();
-      break;
-    case 5:                 // VOLUME
-      cmdVolume = true;
-      showVolume();
       break;
     case 6: 
       cmdSoftMuteMaxAtt = true;
       showSoftMute();  
       break;
     case 7:
-      bfoOn = true;
-      if ((currentMode == LSB || currentMode == USB)) {
-        showBFO();
-       }
-      // showFrequency();
-      break;
+      seekDirection = 1;
+      doSeek();
+      break;  
+    case 8:
+      seekDirection = 0;
+      doSeek();
+      break;    
     default:
-        showStatus();
-        doSeek();
+      showStatus();
       break;
   }
   currentMenuCmd = -1;
+  elapsedCommand = millis();
+}
+
+/**
+ * Return true if the current status is Menu command
+ */
+bool isMenuMode() {
+  return (cmdMenu | cmdStep | cmdBandwidth | cmdAgc | cmdVolume | cmdSoftMuteMaxAtt | cmdMode);
 }
 
 /**
@@ -1034,52 +1065,66 @@ void loop()
       setBand(encoderCount);
     else
     {
-      if (encoderCount == 1) {
+      if (encoderCount == 1)
+      {
         rx.frequencyUp();
-        seekDirection = 1;
       }
-      else{
+      else
+      {
         rx.frequencyDown();
-        seekDirection = 0;
       }
       // Show the current frequency only if it has changed
       currentFrequency = rx.getFrequency();
       showFrequency();
     }
     encoderCount = 0;
-    elapsedRSSI = millis();
     resetEepromDelay();
   }
   else
   {
-    if ( digitalRead(ENCODER_PUSH_BUTTON) == LOW ) {
+    if (digitalRead(ENCODER_PUSH_BUTTON) == LOW)
+    {
       countClick++;
-      if (cmdMenu ) {
+      if (cmdMenu)
+      {
         currentMenuCmd = menuIdx;
         doCurrentMenuCmd();
-      } else if ( countClick == 1) { // If just one click, you can select the band by rotating the encoder
-        if ( (cmdStep | cmdBandwidth | cmdAgc | cmdVolume | cmdSoftMuteMaxAtt | cmdMode | cmdBand) ) {
+      }
+      else if (countClick == 1)
+      { // If just one click, you can select the band by rotating the encoder
+        if (isMenuMode())
+        {
           disableCommands();
           showStatus();
-          showCommandStatus((char *) "VFO ");
-        } else {
-          cmdBand = !cmdBand;
-          showCommandStatus((char *) "Band");
+          showCommandStatus((char *)"VFO ");
         }
-      } else { // GO to MENU if more than one click in less than 1/2 seconds.
+        else if (bfoOn) {
+          bfoOn = false;
+          showStatus();
+        }
+        else
+        {
+          cmdBand = !cmdBand;
+          showCommandStatus((char *)"Band");
+        }
+      }
+      else
+      { // GO to MENU if more than one click in less than 1/2 seconds.
         cmdMenu = !cmdMenu;
-        if (cmdMenu) showMenu();
+        if (cmdMenu)
+          showMenu();
       }
       delay(MIN_ELAPSED_TIME);
+      elapsedCommand = millis();
     }
   }
 
   // Show RSSI status only if this condition has changed
-  if ((millis() - elapsedRSSI) > MIN_ELAPSED_RSSI_TIME * 12)
+  if ((millis() - elapsedRSSI) > MIN_ELAPSED_RSSI_TIME * 6)
   {
     rx.getCurrentReceivedSignalQuality();
     int aux = rx.getCurrentRSSI();
-    if (rssi != aux &&  !(cmdStep | cmdBandwidth | cmdAgc | cmdVolume | cmdSoftMuteMaxAtt | cmdMode) )
+    if (rssi != aux && !isMenuMode())
     {
       rssi = aux;
       showRSSI();
@@ -1087,7 +1132,22 @@ void loop()
     elapsedRSSI = millis();
   }
 
-  if ( (millis() - elapsedClick) > ELAPSED_CLICK ) {
+  // Disable commands control
+  if ((millis() - elapsedCommand) > ELAPSED_COMMAND)
+  {
+    if ((currentMode == LSB || currentMode == USB) )
+    {
+      bfoOn = false;
+      // showBFO();
+      showStatus();
+    } else if (isMenuMode()) 
+      showStatus();
+    disableCommands();
+    elapsedCommand = millis();
+  }
+
+  if ((millis() - elapsedClick) > ELAPSED_CLICK)
+  {
     countClick = 0;
     elapsedClick = millis();
   }
