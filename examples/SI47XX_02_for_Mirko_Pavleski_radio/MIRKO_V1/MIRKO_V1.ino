@@ -12,6 +12,10 @@
   sketch. Be sure you are using the SI4735 Arduino Library written by PU2CLR to run this sketch. The library used by the original
   sketch will not work here. Also, you have to install the LiquidCrystal library.
 
+  The  purpose  of  this  example  is  to  demonstrate a prototype  receiver based  on  the  SI473X devices (SI4735-D60, Si4732-A10 etc)  and  the
+  "PU2CLR SI4735 Arduino Library". It is not the purpose of this prototype  to provide you a beautiful interface. You can do it better.
+
+
   It is  a  complete  radio  capable  to  tune  LW,  MW,  SW  on  AM  and  SSB  mode  and  also  receive  the
   regular  comercial  stations.
 
@@ -56,7 +60,7 @@
 #include <LiquidCrystal.h>
 #include "Rotary.h"
 
-#include "patch_init.h" // SSB patch for whole SSBRX initialization string
+#include <patch_init.h> // SSB patch for whole SSBRX initialization string
 
 const uint16_t size_content = sizeof ssb_patch_content; // see patch_init.h
 
@@ -549,9 +553,9 @@ void doBandwidth(int8_t v)
     rx.setSSBAudioBandwidth(bandwidthSSB[bwIdxSSB].idx);
     // If audio bandwidth selected is about 2 kHz or below, it is recommended to set Sideband Cutoff Filter to 0.
     if (bandwidthSSB[bwIdxSSB].idx == 0 || bandwidthSSB[bwIdxSSB].idx == 4 || bandwidthSSB[bwIdxSSB].idx == 5)
-      rx.setSBBSidebandCutoffFilter(0);
+      rx.setSSBSidebandCutoffFilter(0);
     else
-      rx.setSBBSidebandCutoffFilter(1);
+      rx.setSSBSidebandCutoffFilter(1);
   }
   else if (currentMode == AM)
   {

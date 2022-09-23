@@ -1,11 +1,14 @@
 /*
   This sketch uses an Arduino Pro Mini, 3.3V (8MZ) with a regular OLED/I2C
-  You have to install the Tiny4kOLED library to use this sketch 
+  You have to install the Tiny4kOLED library to use this sketch
 
- 
+  The  purpose  of  this  example  is  to  demonstrate a prototype  receiver based  on  the  SI4735-D60 or Si4732-A10  and  the
+  "PU2CLR SI4735 Arduino Library". It is not the purpose of this prototype  to provide you a beautiful interface. You can do it better.
+
+
   It is  a  complete  radio  capable  to  tune  LW,  MW,  SW  on  AM  and  SSB  mode  and  also  receive  the
-  regular  comercial  stations. 
-  
+  regular  comercial  stations.
+
   Features:   AM; SSB; LW/MW/SW; two super band (from 150kHz to 30 MHz); external mute circuit control; Seek (Automatic tuning)
               AGC; Attenuation gain control; SSB filter; CW; AM filter; 1, 5, 10, 50 and 500kHz step on AM and 10Hhz sep on SSB
 
@@ -19,27 +22,27 @@
   |                           | (*3) RESET (pin 15)           |     12        |
   |                           | (*3) SDIO (pin 18)            |     A4        |
   |                           | (*3) SCLK (pin 17)            |     A5        |
-  |                           | (*4) SEN (pin 16)             |    GND        | 
+  |                           | (*4) SEN (pin 16)             |    GND        |
   |     Buttons               |                               |               |
   |                           | (*1)Switch MODE (AM/LSB/AM)   |      4        |
   |                           | (*1)Banddwith                 |      5        |
   |                           | (*1)BAND                      |      6        |
   |                           | (*2)SEEK                      |      7        |
   |                           | (*1)AGC/Attenuation           |     14 / A0   |
-  |                           | (*1)STEP                      |     15 / A1   | 
+  |                           | (*1)STEP                      |     15 / A1   |
   |                           | VFO/VFO Switch (Encoder)      |     16 / A2   |
   |    Encoder                |                               |               |
   |                           | A                             |       2       |
   |                           | B                             |       3       |
 
   (*1) You have to press the push button and after, rotate the encoder to select the parameter.
-       After you activate a command by pressing a push button, it will keep active for 2,5 seconds. 
-  (*2) The SEEK direction is based on the last movement of the encoder. If the last movement of 
-       the encoder was clockwise, the SEEK will be towards the upper limit. If the last movement of 
-       the encoder was counterclockwise, the SEEK direction will be towards the lower limit.  
-  (*3) - If you are using the SI4732-A10, check the corresponding pin numbers.  
-  (*4) - If you are using the SI4735-D60, connect the SEN pin to the ground; 
-         If you are using the SI4732-A10, connect the SEN pin to the +Vcc. 
+       After you activate a command by pressing a push button, it will keep active for 2,5 seconds.
+  (*2) The SEEK direction is based on the last movement of the encoder. If the last movement of
+       the encoder was clockwise, the SEEK will be towards the upper limit. If the last movement of
+       the encoder was counterclockwise, the SEEK direction will be towards the lower limit.
+  (*3) - If you are using the SI4732-A10, check the corresponding pin numbers.
+  (*4) - If you are using the SI4735-D60, connect the SEN pin to the ground;
+         If you are using the SI4732-A10, connect the SEN pin to the +Vcc.
 
   Prototype documentation: https://pu2clr.github.io/SI4735/
   PU2CLR Si47XX API documentation: https://pu2clr.github.io/SI4735/extras/apidoc/html/
@@ -53,7 +56,7 @@
 #include "Rotary.h"
 
 // Test it with patch_init.h or patch_full.h. Do not try load both.
-#include "patch_init.h" // SSB patch for whole SSBRX initialization string
+#include <patch_init.h> // SSB patch for whole SSBRX initialization string
 
 const uint16_t size_content = sizeof ssb_patch_content; // see ssb_patch_content in patch_full.h or patch_init.h
 
@@ -603,9 +606,9 @@ void doBandwidth(int8_t v)
     rx.setSSBAudioBandwidth(bandwidthSSB[bwIdxSSB].idx);
     // If audio bandwidth selected is about 2 kHz or below, it is recommended to set Sideband Cutoff Filter to 0.
     if (bandwidthSSB[bwIdxSSB].idx == 0 || bandwidthSSB[bwIdxSSB].idx == 4 || bandwidthSSB[bwIdxSSB].idx == 5)
-       rx.setSBBSidebandCutoffFilter(0);
+       rx.setSSBSidebandCutoffFilter(0);
      else
-       rx.setSBBSidebandCutoffFilter(1);
+       rx.setSSBSidebandCutoffFilter(1);
   }
   else if (currentMode == AM)
   {

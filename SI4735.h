@@ -1,12 +1,12 @@
 /**
  * @brief SI4735 ARDUINO LIBRARY  
  * 
- * @details This is an Arduino library for the SI47XX, BROADCAST AM/FM/SW RADIO RECEIVER IC family from Silicon Labs. 
- * @details This library is intended to provide an easier interface for controlling the SI47XX by using Arduino platform. 
+ * @details This is an Arduino library for the SI473X and SI474X, BROADCAST AM/FM/SW RADIO RECEIVER, IC from Silicon Labs for the 
+ * @details Arduino development environment 
  * @details The communication used by this library is I2C.
  * @details This file contains: const (#define), Defined Data type and Methods declarations
  * @details You can see a complete documentation on <https://github.com/pu2clr/SI4735>
- * @details The are more than 20 examples on <https://github.com/pu2clr/SI4735/tree/master/examples>
+ * @details The are more than 30 examples on <https://github.com/pu2clr/SI4735/tree/master/examples>
  *   
  * @see [General Documentation](https://pu2clr.github.io/SI4735/)
  * @see [Schematics](https://pu2clr.github.io/SI4735/extras/schematic/)
@@ -14,7 +14,7 @@
  * @see AN332 REV 0.8 UNIVERSAL PROGRAMMING GUIDE; AMENDMENT FOR SI4735-D60 SSB AND NBFM PATCHES
  * 
  * @author PU2CLR - Ricardo Lima Caratti 
- * @date  2019-2020
+ * @date  2019-2022
  */
 
 #ifndef _SI4735_H // Prevent this file from being compiled more than once
@@ -218,7 +218,7 @@
  * @details The goal of this approach is separating data from code. 
  * The Si47XX family works with many internal data that can be represented by data structure 
  * or defined data type in C/C++. These C/C++ resources have been used widely here.  
- * This aproach made the library easier to build and maintain.  Each data structure created 
+ * This approach made the library easier to build and maintain.  Each data structure created 
  * here has its reference (name of the document and page on which it was based). 
  * In other words, to make the SI47XX device easier to deal, some defined data types were 
  * created to handle byte and bits to process  commands, properties and responses.
@@ -1457,6 +1457,27 @@ public:
     };
 
     void setAutomaticGainControl(uint8_t AGCDIS, uint8_t AGCIDX);
+
+    /**
+     * @ingroup group08 AGC
+     *
+     * @brief Automatic Gain Control setup (alternative name for setAutomaticGainControl )
+     *
+     * @details If FM, overrides AGC setting by disabling the AGC and forcing the LNA to have a certain gain that ranges between 0
+     * (minimum attenuation) and 26 (maximum attenuation).
+     * @details If AM/SSB, Overrides the AGC setting by disabling the AGC and forcing the gain index that ranges between 0
+     * (minimum attenuation) and 37+ATTN_BACKUP (maximum attenuation).
+     *
+     * @see Si47XX PROGRAMMING GUIDE; AN332 (REV 1.0); For FM page 81; for AM page 143
+     * @see setAutomaticGainControl
+     *
+     * @param uint8_t AGCDIS This param selects whether the AGC is enabled or disabled (0 = AGC enabled; 1 = AGC disabled);
+     * @param uint8_t AGCIDX AGC Index (0 = Minimum attenuation (max gain); 1 – 36 = Intermediate attenuation);
+     *                if >greater than 36 - Maximum attenuation (min gain) ).
+     */
+    inline void setAGC(uint8_t AGCDIS, uint8_t AGCIDX) { setAutomaticGainControl( AGCDIS, AGCIDX); };
+
+
     void setSsbAgcOverrite(uint8_t SSBAGCDIS, uint8_t SSBAGCNDX, uint8_t reserved = 0);
 
     void getCurrentReceivedSignalQuality(uint8_t INTACK);
@@ -2256,13 +2277,53 @@ public:
     // AM Seek property configurations
     void setSeekAmLimits(uint16_t bottom, uint16_t top);
     void setSeekAmSpacing(uint16_t spacing);
-    void setSeekAmSrnThreshold(uint16_t value);
+
+    /**
+     * @ingroup group08 Seek
+     * @brief Set the Seek Am Srn Threshold object
+     * @deprecated Use setSeekAmSNRThreshold instead.
+     * @see setSeekAmSNRThreshold
+     * @param value 
+     */
+    void inline setSeekAmSrnThreshold(uint16_t value) { sendProperty(AM_SEEK_SNR_THRESHOLD, value); }; // Wrong name! Will be removed later  
+
+    /**
+     * @ingroup group08 Seek
+     *
+     * @brief Sets the SNR threshold for a valid AM Seek/Tune.
+     *
+     * @details If the value is zero then SNR threshold is not considered when doing a seek. Default value is 5 dB.
+     * @see Si47XX PROGRAMMING GUIDE;  (REV 1.0); page 127
+     */
+    void inline setSeekAmSNRThreshold(uint16_t value) { sendProperty(AM_SEEK_SNR_THRESHOLD, value); }; // Fixing the function name
+
     void setSeekAmRssiThreshold(uint16_t value);
 
     // FM Seek property configurations
     void setSeekFmLimits(uint16_t bottom, uint16_t top);
     void setSeekFmSpacing(uint16_t spacing);
-    void setSeekFmSrnThreshold(uint16_t value);
+
+    /**
+     * @ingroup group08 Seek
+     * @brief Set the Seek Fm Srn Threshold object
+     * @deprecated Use setSeekFmSNRThreshold instead.
+     * @see setSeekFmSNRThreshold
+     * @param value 
+     */
+    void inline setSeekFmSrnThreshold(uint16_t value) { sendProperty(FM_SEEK_TUNE_SNR_THRESHOLD, value); }; // Wrong name. Will be removed later
+    
+    /**
+     * @ingroup group08 Seek
+     *
+     * @brief Sets the SNR threshold for a valid FM Seek/Tune.
+     *
+     * @details SNR Threshold which determines if a valid channel has been found during Seek/Tune. Specified in units of dB in 1 dB steps (0–127). Default is 3 dB
+     * @see Si47XX PROGRAMMING GUIDE; AN332 (REV 1.0); page 102
+     *
+     * @param value between 0 and 127.
+     */
+    void inline setSeekFmSNRThreshold(uint16_t value) { sendProperty(FM_SEEK_TUNE_SNR_THRESHOLD, value); }; // Fixing the function name
+    
     void setSeekFmRssiThreshold(uint16_t value);
 
     void setFmBlendStereoThreshold(uint8_t parameter);
@@ -2485,7 +2546,16 @@ public:
     void setSSB(uint8_t usblsb);
     void setSSBAudioBandwidth(uint8_t AUDIOBW);
     void setSSBAutomaticVolumeControl(uint8_t AVCEN);
-    void setSBBSidebandCutoffFilter(uint8_t SBCUTFLT);
+    void setSSBSidebandCutoffFilter(uint8_t SBCUTFLT); // Fixing the function name
+
+    /**
+     * @ingroup group17 Patch and SSB support
+     * @deprecated Use setSSBSidebandCutoffFilter instead.
+     * @see setSSBSidebandCutoffFilter
+     * @param SBCUTFLT 
+     */
+    void inline setSBBSidebandCutoffFilter(uint8_t SBCUTFLT) { setSSBSidebandCutoffFilter(SBCUTFLT); }; // Wrong name! will be removed later.
+
     void setSSBAvcDivider(uint8_t AVC_DIVIDER);
     void setSSBDspAfc(uint8_t DSP_AFCDIS);
     void setSSBSoftMute(uint8_t SMUTESEL);

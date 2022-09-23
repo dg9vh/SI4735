@@ -18,6 +18,11 @@
   7) RDS;
   8) Frequency step switch (1, 5 and 10kHz).
 
+
+  The  purpose  of  this  example  is  to  demonstrate a prototype  receiver based  on  the  SI4735-D60 or Si4732-A10  and  the
+  "PU2CLR SI4735 Arduino Library". It is not the purpose of this prototype  to provide you a beautiful interface. You can do it better.
+
+
   Wire up
 
   Function                MEGA2560 or DUE  Pin
@@ -59,7 +64,7 @@
 
 #include "Rotary.h"
 
-#include "patch_init.h" // SSB patch for whole SSBRX initialization string
+#include <patch_init.h> // SSB patch for whole SSBRX initialization string
 
 #define MINPRESSURE 200
 #define MAXPRESSURE 1000
@@ -265,24 +270,23 @@ void setup(void)
   attachInterrupt(digitalPinToInterrupt(ENCODER_PIN_B), rotaryEncoder, CHANGE);
 
   // si4735.setRefClock(32768);
-  // si4735.setRefClockPrescaler(1);   // will work with 32768  
+  // si4735.setRefClockPrescaler(1);   // will work with 32768Hz active crystal  (32.768kHz x 1)
 
   // si4735.setRefClock(32768);
-  // si4735.setRefClockPrescaler(2);   // will work with 65536  
+  // si4735.setRefClockPrescaler(2);   // will work with 65536Hz active crystal  (32.768kHz x 2)
 
   // si4735.setRefClock(32768);
-  // si4735.setRefClockPrescaler(10);   // will work with 327680  
-
+  // si4735.setRefClockPrescaler(10);   // will work with 327680Hz => 327.680kHz (32.768kHz x 10) 
 
   // si4735.setRefClock(32768);
-  // si4735.setRefClockPrescaler(100);   // will work with 3276800  
+  // si4735.setRefClockPrescaler(100);   // will work with 3276800Hz => 3.276800 MHz  
 
   
   //  si4735.setRefClock(32768);
-  //  si4735.setRefClockPrescaler(400); // will work with 13107200 => 13,107200 MHz
+  //  si4735.setRefClockPrescaler(400); // will work with 13107200 => 13.107200 MHz (32.768 x 400)
 
    si4735.setRefClock(32500);
-   si4735.setRefClockPrescaler(400);   //   will work with 13000000 => 13Mhz 
+   si4735.setRefClockPrescaler(400);   //   will work with 13000000 => 13Mhz  (32.500 x 400)
 
   si4735.setup(RESET_PIN, 0, POWER_UP_FM, SI473X_ANALOG_AUDIO, XOSCEN_RCLK);
 
@@ -778,7 +782,7 @@ void useBand()
     // Define here the best criteria to find a FM station during the seeking process 
     // si4735.setSeekFmSpacing(10); // frequency spacing for FM seek (5, 10 or 20. They mean 50, 100 or 200 kHz)
     // si4735.setSeekAmRssiThreshold(0);
-    // si4735.setSeekFmSrnThreshold(3);
+    // si4735.setSeekFmSNRThreshold(3);
     
     bfoOn = ssbLoaded = false;
     si4735.setRdsConfig(1, 2, 2, 2, 2);
@@ -1087,9 +1091,9 @@ void loop(void)
       si4735.setSSBAudioBandwidth(bwIdxSSB);
       // If audio bandwidth selected is about 2 kHz or below, it is recommended to set Sideband Cutoff Filter to 0.
       if (bwIdxSSB == 0 || bwIdxSSB == 4 || bwIdxSSB == 5)
-        si4735.setSBBSidebandCutoffFilter(0);
+        si4735.setSSBSidebandCutoffFilter(0);
       else
-        si4735.setSBBSidebandCutoffFilter(1);
+        si4735.setSSBSidebandCutoffFilter(1);
     }
     else if (currentMode == AM)
     {

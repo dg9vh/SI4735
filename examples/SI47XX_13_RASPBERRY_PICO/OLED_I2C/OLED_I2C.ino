@@ -1,19 +1,30 @@
 /*
-  This sketch runs on Raspberry Pi Pico device.   
+  
+  UNDER CONSTRUCTION... Is is not working so far.
+  
+  This sketch runs on Raspberry Pi Pico device.
+
+  You can also compile it via arduino-cli
+  arduino-cli compile --fqbn rp2040:rp2040:seeed_xiao_rp2040  ./SI47XX_13_RASPBERRY_PICO/OLED_I2C 
+  arduino-cli compile --fqbn rp2040:rp2040:rpipico  ./SI47XX_13_RASPBERRY_PICO/OLED_I2C 
 
   It is  a  complete  radio  capable  to  tune  LW,  MW,  SW  on  AM  and  SSB  mode  and  also  receive  the
   regular  comercial  stations.
 
+  The  purpose  of  this  example  is  to  demonstrate a prototype  receiver based  on  the  SI4735-D60 or Si4732-A10  and  the
+  "PU2CLR SI4735 Arduino Library". It is not the purpose of this prototype  to provide you a beautiful interface. You can do it better.
+
+
   Features:   AM; SSB; LW/MW/SW; external mute circuit control; AGC; Attenuation gain control;
               SSB filter; CW; AM filter; 1, 5, 10, 50 and 500kHz step on AM and 10Hhz sep on SSB
 
-  RPi Pico and components wire up. 
-  
+  RPi Pico and components wire up.
+
   | Device name | Device Pin / Description  |  RPi Pico  |
   | ------------| --------------------------| -----------|
   |    OLED     |                           |            |
-  |             | SDA/SDIO                  |  GP0       | 
-  |             | SCL/SCLK                  |  GP1       | 
+  |             | SDA/SDIO                  |  GP0       |
+  |             | SCL/SCLK                  |  GP1       |
   |    Encoder  |                           |            |
   |             | A                         |  GP19      |
   |             | B                         |  GP20      |
@@ -23,7 +34,7 @@
 
   | Si4735  | SI4732   | DESC.  | RPi Pico (GPIO) |
   |---------| -------- |--------|-----------------|
-  | pin 15  |  pin 9   | RESET  |   GP16          |  
+  | pin 15  |  pin 9   | RESET  |   GP16          |
   | pin 18  |  pin 12  | SDIO   |   GP0           |
   | pin 17  |  pin 11  | SCLK   |   GP1           |
 
@@ -44,7 +55,7 @@
 #include <SI4735.h>
 #include "DSEG7_Classic_Regular_16.h"
 #include "Rotary.h"
-#include "patch_init.h" // SSB patch for whole SSBRX initialization string
+#include <patch_init.h> // SSB patch for whole SSBRX initialization string
 
 const uint16_t size_content = sizeof ssb_patch_content; // see patch_init.h
 
@@ -237,8 +248,8 @@ uint8_t volume = DEFAULT_VOLUME;
 // Devices class declarations
 Rotary encoder = Rotary(ENCODER_PIN_A, ENCODER_PIN_B);
 
-Adafruit_SSD1306 display = Adafruit_SSD1306(128, 32, &Wire);
-
+// Adafruit_SSD1306 display = Adafruit_SSD1306(128, 32, &Wire, -1);
+Adafruit_SSD1306 display(128, 32, &Wire, -1);
 SI4735 rx;
 
 void setup()
@@ -248,9 +259,6 @@ void setup()
 
   pinMode(ENCODER_PIN_A, INPUT_PULLUP);
   pinMode(ENCODER_PIN_B, INPUT_PULLUP);
-
-
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C); // Address 0x3C for 128x32
 
   display.display();
   display.setTextColor(SSD1306_WHITE);
@@ -411,9 +419,9 @@ void readAllReceiverInformation()
     rx.setSSBAudioBandwidth(bandwidthSSB[bwIdxSSB].idx);
     // If audio bandwidth selected is about 2 kHz or below, it is recommended to set Sideband Cutoff Filter to 0.
     if (bandwidthSSB[bwIdxSSB].idx == 0 || bandwidthSSB[bwIdxSSB].idx == 4 || bandwidthSSB[bwIdxSSB].idx == 5)
-      rx.setSBBSidebandCutoffFilter(0);
+      rx.setSSBSidebandCutoffFilter(0);
     else
-      rx.setSBBSidebandCutoffFilter(1);
+      rx.setSSBSidebandCutoffFilter(1);
   }
   else if (currentMode == AM)
   {
@@ -745,9 +753,9 @@ void doBandwidth(int8_t v)
     rx.setSSBAudioBandwidth(bandwidthSSB[bwIdxSSB].idx);
     // If audio bandwidth selected is about 2 kHz or below, it is recommended to set Sideband Cutoff Filter to 0.
     if (bandwidthSSB[bwIdxSSB].idx == 0 || bandwidthSSB[bwIdxSSB].idx == 4 || bandwidthSSB[bwIdxSSB].idx == 5)
-      rx.setSBBSidebandCutoffFilter(0);
+      rx.setSSBSidebandCutoffFilter(0);
     else
-      rx.setSBBSidebandCutoffFilter(1);
+      rx.setSSBSidebandCutoffFilter(1);
 
     band[bandIdx].bandwidthIdx = bwIdxSSB;
   }

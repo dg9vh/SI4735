@@ -1,11 +1,15 @@
 /*
-  It is a FM/RDS (from 64 to 108MHz), AM and SSB (from 150 to 30000kHz) receiver 
+  It is a FM/RDS (from 64 to 108MHz), AM and SSB (from 150 to 30000kHz) receiver
+
+  The  purpose  of  this  example  is  to  demonstrate a prototype  receiver based  on  the  SI4735-D60 or Si4732-A10  and  the
+  "PU2CLR SI4735 Arduino Library". It is not the purpose of this prototype  to provide you a beautiful interface. You can do it better.
+
 
   Features:   AM; SSB; LW/MW/SW; AGC; Attenuation gain control;
               SSB filter; CW; AM filter; 1, 5, 10, 50 and 500kHz step on AM and 10Hhz sep on SSB
 
   ESP32 Wire up with LCD, encoder/pushbutton and SI4735-D60
- 
+
   | Device name               | Device Pin / Description      |  ESP32        |
   | ----------------          | ----------------------------- | ------------- |
   |    LCD 16x2 or 20x4       |                               |               |
@@ -33,10 +37,10 @@
        It seems the original project connect the SEN pin to the +Vcc. By using this sketch, you do
        not need to worry about this setting.
   ATTENTION: Read the file user_manual.txt
- 
+
   Prototype documentation: https://pu2clr.github.io/SI4735/
   PU2CLR Si47XX API documentation: https://pu2clr.github.io/SI4735/extras/apidoc/html/
- 
+
   ESP32 and LCD wireup: https://www.circuitschools.com/interfacing-16x2-lcd-module-with-esp32-with-and-without-i2c/
   LCD custom character: https://maxpromer.github.io/LCD-Character-Creator/
 
@@ -48,7 +52,7 @@
 #include <LiquidCrystal.h>
 // #include <LiquidCrystal_I2C.h>
 #include "Rotary.h"
-#include "patch_init.h" // SSB patch for whole SSBRX initialization string
+#include <patch_init.h> // SSB patch for whole SSBRX initialization string
 
 const uint16_t size_content = sizeof ssb_patch_content; // see patch_init.h
 
@@ -421,9 +425,9 @@ void readAllReceiverInformation()
     rx.setSSBAudioBandwidth(bandwidthSSB[bwIdxSSB].idx);
     // If audio bandwidth selected is about 2 kHz or below, it is recommended to set Sideband Cutoff Filter to 0.
     if (bandwidthSSB[bwIdxSSB].idx == 0 || bandwidthSSB[bwIdxSSB].idx == 4 || bandwidthSSB[bwIdxSSB].idx == 5)
-      rx.setSBBSidebandCutoffFilter(0);
+      rx.setSSBSidebandCutoffFilter(0);
     else
-      rx.setSBBSidebandCutoffFilter(1);
+      rx.setSSBSidebandCutoffFilter(1);
   }
   else if (currentMode == AM)
   {
@@ -846,9 +850,9 @@ void doBandwidth(int8_t v)
       rx.setSSBAudioBandwidth(bandwidthSSB[bwIdxSSB].idx);
       // If audio bandwidth selected is about 2 kHz or below, it is recommended to set Sideband Cutoff Filter to 0.
       if (bandwidthSSB[bwIdxSSB].idx == 0 || bandwidthSSB[bwIdxSSB].idx == 4 || bandwidthSSB[bwIdxSSB].idx == 5)
-        rx.setSBBSidebandCutoffFilter(0);
+        rx.setSSBSidebandCutoffFilter(0);
       else
-        rx.setSBBSidebandCutoffFilter(1);
+        rx.setSSBSidebandCutoffFilter(1);
 
       band[bandIdx].bandwidthIdx = bwIdxSSB;
     }

@@ -1,5 +1,10 @@
 /*
   This sketch uses an Arduino Pro Mini, 3.3V (8MZ) with a TM1638 7 segments display and controls
+
+  The  purpose  of  this  example  is  to  demonstrate a prototype  receiver based  on  the  SI4735-D60 or Si4732-A10  and  the
+  "PU2CLR SI4735 Arduino Library". It is not the purpose of this prototype  to provide you a beautiful interface. You can do it better.
+
+
   Features:   AM; SSB; LW/MW/SW; two super band (from 150kHz to 30 MHz); external mute circuit control; Seek (Automatic tuning)
               AGC; Attenuation gain control; SSB filter; CW; AM filter; 1, 5, 10, 50 and 500kHz step on AM and 10Hhz sep on SSB
 
@@ -33,7 +38,7 @@
 
 #include "Rotary.h"
 
-#include "patch_init.h" // SSB patch for whole SSBRX initialization string
+#include <patch_init.h> // SSB patch for whole SSBRX initialization string
 
 const uint16_t size_content = sizeof ssb_patch_content; // see ssb_patch_content in patch_full.h or patch_init.h
 
@@ -565,9 +570,9 @@ void doBandwidth(int8_t v)
     rx.setSSBAudioBandwidth(bandwidthSSB[bwIdxSSB].idx);
     // If audio bandwidth selected is about 2 kHz or below, it is recommended to set Sideband Cutoff Filter to 0.
     if (bandwidthSSB[bwIdxSSB].idx == 0 || bandwidthSSB[bwIdxSSB].idx == 4 || bandwidthSSB[bwIdxSSB].idx == 5)
-      rx.setSBBSidebandCutoffFilter(0);
+      rx.setSSBSidebandCutoffFilter(0);
     else
-      rx.setSBBSidebandCutoffFilter(1);
+      rx.setSSBSidebandCutoffFilter(1);
   }
   else if (currentMode == AM)
   {

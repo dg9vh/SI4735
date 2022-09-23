@@ -1,7 +1,6 @@
 /*
+  EXTERNAL ACTIVE CRYSTAL OR REFERENCE CLOCK TEST ...
   DIGITAL AUDIO TEST.....
-  UNDER CONSTRUCTION.....
-  IT IS NOT WORKING SO FAR.....
   
   This sketch was built to check the external active crystal oscillator instead passive crystal. 
   Link to the external oscillator schematic: https://github.com/pu2clr/SI4735/tree/master/extras/schematic#si473x-and-external-active-crystal-oscillator-or-signal-generator
@@ -59,7 +58,7 @@
 #include <LiquidCrystal.h>
 #include "Rotary.h"
 
-#include "patch_init.h" // SSB patch for whole SSBRX initialization string
+#include <patch_init.h> // SSB patch for whole SSBRX initialization string
 
 const uint16_t size_content = sizeof ssb_patch_content; // see patch_init.h
 
@@ -261,11 +260,30 @@ void setup()
   // rx.setI2CFastMode(); // Set I2C bus speed.
   rx.getDeviceI2CAddress(RESET_PIN); // Looks for the I2C bus address and set it.  Returns 0 if error
 
-  rx.setRefClock(32768);
-  rx.setRefClockPrescaler(1); // will work with 32768
-  // rx.setup(RESET_PIN, 0, POWER_UP_AM, SI473X_DIGITAL_AUDIO1, XOSCEN_RCLK);
-  rx.setup(RESET_PIN, 0, POWER_UP_AM, SI473X_DIGITAL_AUDIO2, XOSCEN_RCLK);
-  // rx.setup(RESET_PIN, 0, POWER_UP_AM, SI473X_ANALOG_AUDIO, XOSCEN_RCLK);
+  // Example for an active 100kHz crystal (clock  100000Hz) 
+  // rx.setRefClock(33333);           // Ref = 33333Hz
+  // rx.setRefClockPrescaler(3);      // 33333 x 3 = ˜100000Hz 
+    
+  // Example for an active 32.768kHz crystal (32768Hz)
+  rx.setRefClock(32768);           // Ref = 32768Hz
+  rx.setRefClockPrescaler(1);      // 32768 x 1 = 32768Hz
+
+  // Example for an active 4.9152MHz crystal (4915200Hz)
+  // rx.setRefClock(32768);        // Ref = 32768Hz
+  // rx.setRefClockPrescaler(150); // 32768 x 150 = 4915200Hz
+
+  // Example for an active 13.107200MHz crystal (13107200Hz)
+  // rx.setRefClock(32768);        // Ref = 32768Hz
+  // rx.setRefClockPrescaler(400); // 32768 x 400 = 13107200Hz
+
+  // Example for an active 13MHz crystal (13000000Hz)
+  // si4735.setRefClock(32500);          //  32.5kHz
+  // si4735.setRefClockPrescaler(400);   // 32500 x 400 = 13000000 (13MHz)
+
+
+  // rx.setup(RESET_PIN, 0, POWER_UP_AM, SI473X_DIGITAL_AUDIO1, XOSCEN_RCLK); // Digital Audio 
+  // rx.setup(RESET_PIN, 0, POWER_UP_AM, SI473X_DIGITAL_AUDIO2, XOSCEN_RCLK); // Digital Audio
+  rx.setup(RESET_PIN, 0, POWER_UP_AM, SI473X_ANALOG_AUDIO, XOSCEN_RCLK);      // Analog Audio
   delay(500); 
 
   // Checking the EEPROM content
@@ -614,9 +632,9 @@ void doBandwidth(int8_t v)
     rx.setSSBAudioBandwidth(bandwidthSSB[bwIdxSSB].idx);
     // If audio bandwidth selected is about 2 kHz or below, it is recommended to set Sideband Cutoff Filter to 0.
     if (bandwidthSSB[bwIdxSSB].idx == 0 || bandwidthSSB[bwIdxSSB].idx == 4 || bandwidthSSB[bwIdxSSB].idx == 5)
-      rx.setSBBSidebandCutoffFilter(0);
+      rx.setSSBSidebandCutoffFilter(0);
     else
-      rx.setSBBSidebandCutoffFilter(1);
+      rx.setSSBSidebandCutoffFilter(1);
   }
   else if (currentMode == AM)
   {

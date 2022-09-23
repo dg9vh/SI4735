@@ -9,6 +9,10 @@
   For this reason, it is necessary change the pins of some buttons.
   Fortunately, you can use the ATmega328 analog pins as digital pins.
 
+  The  purpose  of  this  example  is  to  demonstrate a prototype  receiver based  on  the  SI4735-D60 or Si4732-A10  and  the
+  "PU2CLR SI4735 Arduino Library". It is not the purpose of this prototype  to provide you a beautiful interface. You can do it better.
+
+
   Features:   FM/RDS; AM; SSB; LW/MW/SW; two super band (from 150kHz to 30 MHz); external mute circuit control; Seek (Automatic tuning)
               AGC; Attenuation gain control; SSB filter; CW; AM filter; 1, 5, 10, 50 and 500kHz step on AM and 10Hhz sep on SSB
 
@@ -51,7 +55,7 @@
 #include "Rotary.h"
 
 // Test it with patch_init.h or patch_full.h. Do not try load both.
-#include "patch_init.h" // SSB patch for whole SSBRX initialization string
+#include <patch_init.h> // SSB patch for whole SSBRX initialization string
 
 const uint16_t size_content = sizeof ssb_patch_content; // see ssb_patch_content in patch_full.h or patch_init.h
 
@@ -659,9 +663,9 @@ void loop()
           si4735.setSSBAudioBandwidth(bwIdxSSB);
           // If audio bandwidth selected is about 2 kHz or below, it is recommended to set Sideband Cutoff Filter to 0.
           if (bwIdxSSB == 0 || bwIdxSSB == 4 || bwIdxSSB == 5)
-            si4735.setSBBSidebandCutoffFilter(0);
+            si4735.setSSBSidebandCutoffFilter(0);
           else
-            si4735.setSBBSidebandCutoffFilter(1);
+            si4735.setSSBSidebandCutoffFilter(1);
         }
         else if (currentMode == AM)
         {

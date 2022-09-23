@@ -1,16 +1,16 @@
 /**
  * @mainpage SI47XX Arduino Library implementation 
  * 
- * This is a library for the SI4735, BROADCAST AM/FM/SW RADIO RECEIVER, IC from Silicon Labs for the 
- * Arduino development environment.  It works with I2C protocol and can provide an easier interface for controlling the SI47XX CI family.<br>
+ * This is a library for the SI473X and SI474X, BROADCAST AM/FM/SW RADIO RECEIVER, IC from Silicon Labs for the 
+ * Arduino development environment.  It works with I2C protocol and can provide an easier interface for controlling the SI47XX IC family.<br>
  * 
  * This library was built based on [Si47XX PROGRAMMING GUIDE-AN332 (REV 1.0)](https://www.silabs.com/documents/public/application-notes/AN332.pdf) document from Silicon Labs. 
  *
- * It also can be used on **all members of the SI473X family** respecting, of course, the features available for each IC version. 
+ * It also can be used on **all members of the SI473X and SI474X family** respecting, of course, the features available for each IC version. 
  * These functionalities can be seen in the comparison matrix shown in table 1 (Product Family Function); pages 2 and 3 of the programming guide.
  * If you need to build a prototype based on SI47XX device, see <https://pu2clr.github.io/SI4735/><br>
  * 
- * This library has more than 20 examples and it can be freely distributed using the MIT Free Software model. [Copyright (c) 2019 Ricardo Lima Caratti](https://pu2clr.github.io/SI4735/#mit-license).  
+ * This library has more than 30 examples and it can be freely distributed using the MIT Free Software model. [Copyright (c) 2019 Ricardo Lima Caratti](https://pu2clr.github.io/SI4735/#mit-license).  
  * Contact: pu2clr@gmail.com
  * 
  * @details This library uses the I²C communication protocol and implements most of the functions offered by Si47XX (BROADCAST AM / FM / SW / LW RADIO RECEIVER) IC family from Silicon Labs. 
@@ -26,7 +26,7 @@
  * @details 9. RDS support.
  * @details 10. SSB (Single Side Band) patch support (SI4735-D60 and SI4732-A10). 
  * @details 11. Digital Audio (__Attention__: Crystal and digital audio mode cannot be used at the same time).
- * @details 12. More than 20 example available.  See <https://github.com/pu2clr/SI4735/tree/master/examples><br>
+ * @details 12. More than 30 example available.  See <https://github.com/pu2clr/SI4735/tree/master/examples><br>
  * 
  *  Some texts were extracted directly from the Silicon Labs documentation. The name of the Silicon Labs document and pages are described in the source code comments.
  * 
@@ -36,7 +36,7 @@
  * @see AN332 REV 0.8 UNIVERSAL PROGRAMMING GUIDE; AMENDMENT FOR SI4735-D60 SSB AND NBFM PATCHES
  * 
  * @author PU2CLR - Ricardo Lima Caratti 
- * @date  2019-2020
+ * @date  2019-2022
  * @copyright MIT Free Software model. See [Copyright (c) 2019 Ricardo Lima Caratti](https://pu2clr.github.io/SI4735/#mit-license). 
  */
 
@@ -374,28 +374,30 @@ void SI4735::setPowerUp(uint8_t CTSIEN, uint8_t GPO2OEN, uint8_t PATCH, uint8_t 
 }
 
 /**
- * @ingroup group07 Device Power Up 
- * 
+ * @ingroup group07 Device Power Up
+ *
  * @brief Powerup the Si47XX
- * 
+ *
  * @details Before call this function call the setPowerUp to set up the parameters.
- * 
+ *
  * @details Parameters you have to set up with setPowerUp
- * 
+ *
  * | Parameter | Description |
  * | --------- | ----------- |
  * | CTSIEN    | Interrupt anabled or disabled |
  * | GPO2OEN   | GPO2 Output Enable or disabled |
  * | PATCH     | Boot normally or patch |
- * | XOSCEN    | Use external crystal oscillator. 1 = Use crystal oscillator;  (crystal oscillator disabled) |
+ * | XOSCEN    | 0 (XOSCEN_RCLK) = external active crystal oscillator. 1 (XOSCEN_CRYSTAL) = passive crystal oscillator;  |
  * | FUNC      | defaultFunction = 0 = FM Receive; 1 = AM (LW/MW/SW) Receiver |
  * | OPMODE    | SI473X_ANALOG_AUDIO (B00000101) or SI473X_DIGITAL_AUDIO (B00001011) |
- * 
+ *
  * ATTENTION: The document AN383; "Si47XX ANTENNA, SCHEMATIC, LAYOUT, AND DESIGN GUIDELINES"; rev 0.8; page 6; there is the following note:
  *            Crystal and digital audio mode cannot be used at the same time. Populate R1 and remove C10, C11, and X1 when using digital audio.
- * 
- *see setMaxDelaySetFrequency()
- * @see MAX_DELAY_AFTER_POWERUP 
+ *
+ * @see setMaxDelaySetFrequency()
+ * @see MAX_DELAY_AFTER_POWERUP
+ * @see XOSCEN_CRYSTAL
+ * @see XOSCEN_RCLK
  * @see  SI4735::setPowerUp()
  * @see  Si47XX PROGRAMMING GUIDE; AN332 (REV 1.0); pages 64, 129
  */
@@ -522,14 +524,25 @@ void SI4735::setRefClock(uint16_t refclk)
 
 /**
  * @ingroup group07
- * @brief Sets the number used by the prescaler to divide the external RCLK down to the internal REFCLK. 
- * @details The range may be between 1 and 4095 in 1 unit steps. 
- * @details For example, an RCLK of 13 MHz would require a prescaler value of 400 to divide it to 32500 Hz. The reference clock frequency property would then need to be set to 32500 Hz. 
- * @details ATTENTION by default, this function considers you are using the RCLK pin as clock source. 
- * 
+ * @brief Sets the number used by the prescaler to divide the external RCLK down to the internal REFCLK.
+ * @details The range may be between 1 and 4095 in 1 unit steps.
+ * @details For example, an RCLK of 13 MHz would require a prescaler value of 400 to divide it to 32500 Hz. The reference clock frequency property would then need to be set to 32500 Hz.
+ * @details ATTENTION by default, this function considers you are using the RCLK pin as clock source.
+ * @details Example: The code below shows the setup for an active 4.9152MHz crystal
+ * @code
+ *   rx.setRefClock(32768);
+ *   rx.setRefClockPrescaler(150); // will work with 4915200Hz active crystal => 4.9152MHz => (32768 x 150)
+ *   rx.setup(RESET_PIN, 0, POWER_UP_AM, SI473X_ANALOG_AUDIO, XOSCEN_RCLK);
+ * @endcode
+ * @details Example: The code below shows the setup for an active 13MHz crystal
+ * @code
+ *   rx.setRefClock(32500);
+ *   rx.setRefClockPrescaler(400); // 32500 x 400 = 13000000 (13MHz)
+ *   rx.setup(RESET_PIN, 0, POWER_UP_AM, SI473X_ANALOG_AUDIO, XOSCEN_RCLK);
+ * @endcode
  * @see Si47XX PROGRAMMING GUIDE; AN332 (REV 1.0); pages 34 and 35
- * 
- * @param prescale  Prescaler for Reference Clock value; Between 1 and 4095 in 1 unit steps. Default is 1. 
+ *
+ * @param prescale  Prescaler for Reference Clock value; Between 1 and 4095 in 1 unit steps. Default is 1.
  * @param rclk_sel  0 = RCLK pin is clock source (default); 1 = DCLK pin is clock source
  */
 void SI4735::setRefClockPrescaler(uint16_t prescale, uint8_t rclk_sel)
@@ -1391,35 +1404,6 @@ void SI4735::setSeekFmSpacing(uint16_t spacing)
     sendProperty(FM_SEEK_FREQ_SPACING, spacing);
 }
 
-/**
- * @ingroup group08 Seek 
- * 
- * @brief Sets the SNR threshold for a valid AM Seek/Tune. 
- * 
- * @details If the value is zero then SNR threshold is not considered when doing a seek. Default value is 5 dB.
- * 
- * @see Si47XX PROGRAMMING GUIDE;  (REV 1.0); page 127
- */
-void SI4735::setSeekAmSrnThreshold(uint16_t value)
-{
-    sendProperty(AM_SEEK_SNR_THRESHOLD, value);
-}
-
-/**
- * @ingroup group08 Seek 
- * 
- * @brief Sets the SNR threshold for a valid FM Seek/Tune. 
- * 
- * @details SNR Threshold which determines if a valid channel has been found during Seek/Tune. Specified in units of dB in 1 dB steps (0–127). Default is 3 dB
- * 
- * @see Si47XX PROGRAMMING GUIDE; AN332 (REV 1.0); page 102
- * 
- * @param value between 0 and 127.
- */
-void SI4735::setSeekFmSrnThreshold(uint16_t value)
-{
-    sendProperty(FM_SEEK_TUNE_SNR_THRESHOLD, value);
-}
 
 /**
  * @ingroup group08 Seek 
@@ -2726,7 +2710,7 @@ char *SI4735::getRdsDateTime()
  * @see AN332 REV 0.8 UNIVERSAL PROGRAMMING GUIDE; pages 3 and 5 
  */
 
-    /**
+/**
  * @ingroup group17 Patch and SSB support 
  *  
  * @brief Sets the SSB Beat Frequency Offset (BFO). 
@@ -2861,20 +2845,19 @@ void SI4735::setSSBAvcDivider(uint8_t AVC_DIVIDER)
     sendSSBModeProperty();
 }
 
-/**  
+/**
  * @ingroup group17 Patch and SSB support
- * 
- * @brief Sets SBB Sideband Cutoff Filter for band pass and low pass filters.
- * 
- * @details 0 = Band pass filter to cutoff both the unwanted side band and high frequency components > 2.0 kHz of the wanted side band. (default)
- * @details 1 = Low pass filter to cutoff the unwanted side band. 
- * Other values = not allowed.
  *
- * @see AN332 REV 0.8 UNIVERSAL PROGRAMMING GUIDE; page 24 
- *  
+ * @brief Sets SBB Sideband Cutoff Filter for band pass and low pass filters.
+ *
+ * @details 0 = Band pass filter to cutoff both the unwanted side band and high frequency components > 2.0 kHz of the wanted side band. (default)
+ * @details 1 = Low pass filter to cutoff the unwanted side band.
+ * Other values = not allowed.
+ * @see AN332 REV 0.8 UNIVERSAL PROGRAMMING GUIDE; page 24
+ *
  * @param SBCUTFLT 0 or 1; see above
  */
-void SI4735::setSBBSidebandCutoffFilter(uint8_t SBCUTFLT)
+void SI4735::setSSBSidebandCutoffFilter(uint8_t SBCUTFLT)
 {
     currentSSBMode.param.SBCUTFLT = SBCUTFLT;
     sendSSBModeProperty();
@@ -2944,7 +2927,9 @@ void SI4735::setSSB(uint8_t usblsb)
 /**
  * @ingroup group17 Patch and SSB support
  *  
- * @details Tunes the SSB (LSB or USB) receiver to a frequency between 520 and 30 MHz in 1 kHz steps. 
+ * @details Tunes the SSB (LSB or USB) receiver to a frequency between 150 and 30 MHz. 
+ * @details Via VFO you have 1kHz steps. 
+ * @details Via BFO you have 8Hz steps. 
  * 
  * @see AN332 REV 0.8 UNIVERSAL PROGRAMMING GUIDE; pages 13 and 14
  * @see setAM()
@@ -3244,17 +3229,44 @@ bool SI4735::downloadPatch(const uint8_t *ssb_patch_content, const uint16_t ssb_
 
 /**
  * @ingroup group17 Patch and SSB support
- *  
- * @brief Same downloadPatch. 
- * @details Transfers the content of a patch stored in a compressed array of bytes to the SI4735 device. 
- * @details The first byte of each line of the patch content is a command 0x15 or 0x16.
- * @details To shrink the patch size stored into the controller he first byte will be ommited and a new array will be added
- * @details to indicate the position where the command 0x15 occours. 
- * @see  patch_ssb_compressed.h 
+ *
+ * @brief   Deal with compressed SSB patch
+ * @details It works like the downloadPatch method but it is very useful when you need to save memory. 
+ * @details Transfers the content of a patch stored in a compressed array of bytes to the SI4735 device.
+ * @details If you see the patch_init.h and patch_full.h files you will notice that the  first byte of each line of the content of 
+ * @details the patch has the value 0x15 or 0x16. To shrink the original patch size stored into the master MCU (Arduino) the first byte
+ * @details is ommited and a new array is added to indicate the position where the value 0x15 occours.
+ * @details For the other lines, the downloadCompressedPatch method will include the value 0x16.
+ * @details The value 0x16 occurs on most lines in the patch. This approach will save about 1K of memory. 
+ * @details The example code below shows how to use compressed SSB patch.
+ * @code 
+ *   #include <patch_ssb_compressed.h> // SSB patch for whole SSBRX initialization string
+ *   const uint16_t size_content = sizeof ssb_patch_content; // See ssb_patch_content.h
+ *   const uint16_t cmd_0x15_size = sizeof cmd_0x15;         // Array of lines where the 0x15 command occurs in the patch content.
+ *
+ *   void loadSSB()
+ *   {
+ *     .
+ *     .
+ *     rx.setI2CFastModeCustom(500000);
+ *     rx.queryLibraryId(); 
+ *     rx.patchPowerUp();
+ *     delay(50);
+ *     rx.downloadCompressedPatch(ssb_patch_content, size_content, cmd_0x15, cmd_0x15_size);
+ *     rx.setSSBConfig(bandwidthSSB[bwIdxSSB].idx, 1, 0, 1, 0, 1);
+ *     rx.setI2CStandardMode();
+ *     .
+ *     .
+ *   }
+ * @endcode 
+ * @see  downloadPatch
+ * @see  patch_ssb_compressed.h, patch_init.h, patch_full.h
+ * @see  SI47XX_03_ALL_IN_ONE_NEW_INTERFACE_V15.ino
+ * @see  SI47XX_09_NOKIA_5110/ALL_IN_ONE_7_BUTTONS/ALL_IN_ONE_7_BUTTONS.ino
  * @param ssb_patch_content         point to array of bytes content patch.
  * @param ssb_patch_content_size    array size (number of bytes). The maximum size allowed for a patch is 15856 bytes
  * @param cmd_0x15                  Array of lines where the first byte of each patch content line is 0x15
- * @param cmd_0x15_size             Array size      
+ * @param cmd_0x15_size             Array size
  */
 bool SI4735::downloadCompressedPatch(const uint8_t *ssb_patch_content, const uint16_t ssb_patch_content_size, const uint16_t *cmd_0x15, const int16_t cmd_0x15_size)
 {
@@ -3401,7 +3413,7 @@ si4735_eeprom_patch_header SI4735::downloadPatchFromEeprom(int eeprom_i2c_addres
  * @param len final string size (in bytes) 
  * @param dot the decimal or tousand separator position
  * @param separator symbol "." or "," 
- * @param remove_leading_zeros if true removes up to two leading zeros 
+ * @param remove_leading_zeros if true removes up to two leading zeros (default is true)
  */
 void SI4735::convertToChar(uint16_t value, char *strValue, uint8_t len, uint8_t dot, uint8_t separator, bool remove_leading_zeros)
 {

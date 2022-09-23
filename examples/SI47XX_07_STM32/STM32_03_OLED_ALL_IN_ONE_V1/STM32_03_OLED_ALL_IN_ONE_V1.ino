@@ -4,6 +4,11 @@
   This sketch has been successfully tested on STM32F103 Bluepill
   The table below shows the Si4735 and STM32F103C8 pin connections
 
+  The  purpose  of  this  example  is  to  demonstrate a prototype  receiver based  on  the  SI4735-D60 or Si4732-A10  and  the
+  "PU2CLR SI4735 Arduino Library". It is not the purpose of this prototype  to provide you a beautiful interface. You can do it better.
+
+
+
   STM32F1 and components wire up. 
   
   | Device name   | Device Pin / Description |  STM32F1|
@@ -93,7 +98,7 @@
 
 #include "Rotary.h"
 
-#include "patch_init.h" // SSB patch for whole SSBRX initialization string
+#include <patch_init.h> // SSB patch for whole SSBRX initialization string
 
 const uint16_t size_content = sizeof ssb_patch_content; // see ssb_patch_content in patch_full.h or patch_init.h
 
@@ -647,9 +652,9 @@ void bandwidthButton() {
     si4735.setSSBAudioBandwidth(bwIdxSSB);
     // If audio bandwidth selected is about 2 kHz or below, it is recommended to set Sideband Cutoff Filter to 0.
     if (bwIdxSSB == 0 || bwIdxSSB == 4 || bwIdxSSB == 5)
-      si4735.setSBBSidebandCutoffFilter(0);
+      si4735.setSSBSidebandCutoffFilter(0);
     else
-      si4735.setSBBSidebandCutoffFilter(1);
+      si4735.setSSBSidebandCutoffFilter(1);
   }
   else if (currentMode == AM)
   {

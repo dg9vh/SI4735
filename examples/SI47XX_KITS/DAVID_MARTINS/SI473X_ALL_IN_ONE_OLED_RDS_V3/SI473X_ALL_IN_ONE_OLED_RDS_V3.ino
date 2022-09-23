@@ -71,7 +71,7 @@
 #include <font8x16atari.h> // Please, install the TinyOLED-Fonts library
 #include "Rotary.h"
 
-#include "patch_ssb_compressed.h"    // Compressed SSB patch version (saving almost 1KB)
+#include <patch_ssb_compressed.h>    // Compressed SSB patch version (saving almost 1KB)
 
 const uint16_t size_content = sizeof ssb_patch_content; // See ssb_patch_content.h
 const uint16_t cmd_0x15_size = sizeof cmd_0x15;         // Array of lines where the 0x15 command occurs in the patch content.
@@ -413,9 +413,9 @@ void readAllReceiverInformation()
     si4735.setSSBAudioBandwidth(bandwidthSSB[bwIdxSSB].idx);
     // If audio bandwidth selected is about 2 kHz or below, it is recommended to set Sideband Cutoff Filter to 0.
     if (bandwidthSSB[bwIdxSSB].idx == 0 || bandwidthSSB[bwIdxSSB].idx == 4 || bandwidthSSB[bwIdxSSB].idx == 5)
-      si4735.setSBBSidebandCutoffFilter(0);
+      si4735.setSSBSidebandCutoffFilter(0);
     else
-      si4735.setSBBSidebandCutoffFilter(1);
+      si4735.setSSBSidebandCutoffFilter(1);
   }
   else if (currentMode == AM)
   {
@@ -963,9 +963,9 @@ void doBandwidth(uint8_t v)
     si4735.setSSBAudioBandwidth(bandwidthSSB[bwIdxSSB].idx);
     // If audio bandwidth selected is about 2 kHz or below, it is recommended to set Sideband Cutoff Filter to 0.
     if (bandwidthSSB[bwIdxSSB].idx == 0 || bandwidthSSB[bwIdxSSB].idx == 4 || bandwidthSSB[bwIdxSSB].idx == 5)
-      si4735.setSBBSidebandCutoffFilter(0);
+      si4735.setSSBSidebandCutoffFilter(0);
     else
-      si4735.setSBBSidebandCutoffFilter(1);
+      si4735.setSSBSidebandCutoffFilter(1);
   }
   else if (currentMode == AM)
   {

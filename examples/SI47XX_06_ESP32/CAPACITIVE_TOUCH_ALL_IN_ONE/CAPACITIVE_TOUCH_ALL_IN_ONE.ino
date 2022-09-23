@@ -57,7 +57,7 @@
 #include <LiquidCrystal_I2C.h> // Version 1.1.4 by Frank de Brabander. Download this library on https://github.com/marcoschwartz/LiquidCrystal_I2C
 #include "Rotary.h"
 
-#include "patch_init.h" // SSB patch for whole SSBRX initialization string
+#include <patch_init.h> // SSB patch for whole SSBRX initialization string
 
 const uint16_t size_content = sizeof ssb_patch_content; // see ssb_patch_content in patch_full.h or patch_init.h
 
@@ -606,9 +606,9 @@ void loop()
         si4735.setSSBAudioBandwidth(bwIdxSSB);
         // If audio bandwidth selected is about 2 kHz or below, it is recommended to set Sideband Cutoff Filter to 0.
         if (bwIdxSSB == 0 || bwIdxSSB == 4 || bwIdxSSB == 5)
-          si4735.setSBBSidebandCutoffFilter(0);
+          si4735.setSSBSidebandCutoffFilter(0);
         else
-          si4735.setSBBSidebandCutoffFilter(1);
+          si4735.setSSBSidebandCutoffFilter(1);
       }
       else if (currentMode == AM)
       {

@@ -56,7 +56,7 @@
 #include <Adafruit_GFX.h>
 #include "DSEG7_Classic_Mini_Regular_20.h"
 
-#include "patch_init.h" // SSB patch for whole SSBRX initialization string
+#include <patch_init.h> // SSB patch for whole SSBRX initialization string
 
 const uint16_t size_content = sizeof ssb_patch_content; // see ssb_patch_content in patch_full.h or patch_init.h
 
@@ -304,12 +304,12 @@ void setup()
   drawDial(band[bandIdx].minimumFreq, band[bandIdx].maximumFreq, band[bandIdx].currentDivider);
 
   // init Button
-  btnAGC = {30, 60, 60, 30, "AGC"};
-  btnPrevBand = {110, 60, 80, 30, "Prev Band"};
-  btnNextBand = {210, 60, 80, 30, "Next Band"};
-  btnMode = {30, 100, 60, 30, (char*) AMMode[idxAMMode]};
-  btnBFO = {110, 100, 80, 30, (char*) "BFO: 0"};
-  btnBandwidth = {210, 100, 80, 30, "BW: 4 kHz"};
+  btnAGC = {30, 60, 60, 30, (char *) "AGC"};
+  btnPrevBand = {110, 60, 80, 30, (char *) "Prev Band"};
+  btnNextBand = {210, 60, 80, 30, (char *) "Next Band"};
+  btnMode = {30, 100, 60, 30, (char *) AMMode[idxAMMode]};
+  btnBFO = {110, 100, 80, 30, (char *) "BFO: 0"};
+  btnBandwidth = {210, 100, 80, 30, (char *) "BW: 4 kHz"};
 
   showButtons();
 
@@ -727,9 +727,9 @@ void loop()
         si4735.setSSBAudioBandwidth(bwIdxSSB);
         // If audio bandwidth selected is about 2 kHz or below, it is recommended to set Sideband Cutoff Filter to 0.
         if (bwIdxSSB == 0 || bwIdxSSB == 4 || bwIdxSSB == 5)
-          si4735.setSBBSidebandCutoffFilter(0);
+          si4735.setSSBSidebandCutoffFilter(0);
         else
-          si4735.setSBBSidebandCutoffFilter(1);
+          si4735.setSSBSidebandCutoffFilter(1);
       }
       else if (currentMode == AM)
       {
